@@ -4,11 +4,11 @@ package feature
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.data.util.Identifier
-import definition.DecoratedFeatureConfig
+import definition._
 
 object Features {
     val NOPE = register("nope", new Feature(Codec[DefaultFeatureConfig]))
-    val DECORATED = register("decorated", new Feature(Codec[DecoratedFeatureConfig]))
+    val DECORATED = register("decorated", DecoratedFeature)
 
     private def register[FC <: FeatureConfig](name: String, feature: Feature[FC]): Feature[FC] = {
         feature.register(Identifier("minecraft", name))

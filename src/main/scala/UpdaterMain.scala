@@ -32,9 +32,9 @@ object UpdaterMain {
             }
         }
 
-        println(originFeature)
+        val targetFeature = originFeature.feature.process(originFeature.config)
 
-        val targetFeature: String = Codec[ConfiguredFeature[_, _]].encode(originFeature)(using JsonCodecs.prettyJsonEncoder) match {
+        val targetFeatureString: String = Codec[ConfiguredFeature[_, _]].encode(targetFeature)(using JsonCodecs.prettyJsonEncoder) match {
             case Right(json) => json
             case Left(errors) => {
                 println("Errors encoding configured feature:")
@@ -44,7 +44,7 @@ object UpdaterMain {
             }
         }
 
-        write(targetFile, targetFeature)
+        write(targetFile, targetFeatureString)
     }
 
     @throws[IOException]

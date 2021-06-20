@@ -1,6 +1,7 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package feature
 
+import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.serialization.{ Codec, Element, Result }
 import de.martenschaefer.data.util.Either._
 
@@ -14,7 +15,13 @@ class DefaultFeatureCodec(codec: Codec[ConfiguredFeature[_, _]]) extends Codec[C
         case Left(errors) => element match {
             case Element.ObjectElement(map) =>
                 if (map.contains("type") && map.contains("config"))
-                    Right(ConfiguredFeature(DefaultFeature(element), null))
+                    if (errors.exists(_ match {
+                        case Registry.UnknownRegistryElementError(element, _) => element.isInstanceOf[Feature[_]]
+                        case _ => false
+                    }))
+                        Right(ConfiguredFeature(DefaultFeature(element), null))
+                    else
+                        Left(errors)
                 else
                     Left(errors)
 

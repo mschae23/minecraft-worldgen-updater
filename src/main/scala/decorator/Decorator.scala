@@ -6,6 +6,8 @@ import de.martenschaefer.data.registry.impl.SimpleRegistry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.data.util._
+import de.martenschaefer.minecraft.worldgenupdater.feature.{ ConfiguredFeature, Features }
+import de.martenschaefer.minecraft.worldgenupdater.feature.definition.DecoratedFeatureConfig
 import decorator.definition._
 
 class Decorator[DC <: DecoratorConfig](configCodec: Codec[DC]) {
@@ -14,7 +16,8 @@ class Decorator[DC <: DecoratorConfig](configCodec: Codec[DC]) {
 
     def configure(config: DC): ConfiguredDecorator[DC, Decorator[DC]] = ConfiguredDecorator(this, config)
 
-    def process(decorator: ConfiguredDecorator[DC, Decorator[DC]]): ConfiguredDecorator[_, _] = decorator
+    def process(config: DC, feature: ConfiguredFeature[_, _]): ConfiguredFeature[_, _] =
+        ConfiguredFeature(Features.DECORATED, DecoratedFeatureConfig(feature, ConfiguredDecorator(this, config)))
 }
 
 object Decorator {

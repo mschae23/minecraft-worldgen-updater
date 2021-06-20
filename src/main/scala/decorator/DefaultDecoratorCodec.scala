@@ -1,6 +1,7 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package decorator
 
+import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.serialization.{ Codec, Element, Result }
 import de.martenschaefer.data.util.Either._
 
@@ -14,7 +15,13 @@ class DefaultDecoratorCodec(codec: Codec[ConfiguredDecorator[_, _]]) extends Cod
         case Left(errors) => element match {
             case Element.ObjectElement(map) =>
                 if (map.contains("type") && map.contains("config"))
-                    Right(ConfiguredDecorator(DefaultDecorator(element), null))
+                    if (errors.exists(_ match {
+                        case Registry.UnknownRegistryElementError(element, _) => element.isInstanceOf[Decorator[_]]
+                        case _ => false
+                    }))
+                        Right(ConfiguredDecorator(DefaultDecorator(element), null))
+                    else
+                        Left(errors)
                 else
                     Left(errors)
 
