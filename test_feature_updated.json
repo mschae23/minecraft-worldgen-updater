@@ -1,0 +1,23 @@
+{
+  "config": {
+    "feature": {
+      "config": {},
+      "type": "minecraft:nope"
+    },
+    "decorator": {
+      "config": {
+        "height": {
+          "min_inclusive": {
+            "above_bottom": 16
+          },
+          "max_inclusive": {
+            "above_bottom": 95
+          },
+          "type": "minecraft:uniform"
+        }
+      },
+      "type": "minecraft:range"
+    }
+  },
+  "type": "minecraft:decorated"
+}
