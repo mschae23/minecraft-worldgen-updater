@@ -15,10 +15,7 @@ class DefaultFeatureCodec(codec: Codec[ConfiguredFeature[_, _]]) extends Codec[C
         case Left(errors) => element match {
             case Element.ObjectElement(map) =>
                 if (map.contains("type") && map.contains("config"))
-                    if (errors.exists(_ match {
-                        case Registry.UnknownRegistryElementError(element, _) => element.isInstanceOf[Feature[_]]
-                        case _ => false
-                    }))
+                    if (errors.exists(_.isInstanceOf[Registry.UnknownRegistryIdError]))
                         Right(ConfiguredFeature(DefaultFeature(element), null))
                     else
                         Left(errors)

@@ -1,22 +1,42 @@
 {
   "config": {
     "feature": {
-      "config": {},
-      "type": "minecraft:nope"
-    },
-    "decorator": {
       "config": {
-        "height": {
-          "min_inclusive": {
-            "above_bottom": 16
+        "feature": {
+          "config": {
+            "feature": {
+              "config": {},
+              "type": "minecraft:nope"
+            },
+            "decorator": {
+              "config": {
+                "height": {
+                  "min_inclusive": {
+                    "above_bottom": 16
+                  },
+                  "max_inclusive": {
+                    "above_bottom": 95
+                  },
+                  "type": "minecraft:uniform"
+                }
+              },
+              "type": "minecraft:range"
+            }
           },
-          "max_inclusive": {
-            "above_bottom": 95
-          },
-          "type": "minecraft:uniform"
+          "type": "minecraft:decorated"
+        },
+        "decorator": {
+          "config": {},
+          "type": "minecraft:square"
         }
       },
-      "type": "minecraft:range"
+      "type": "minecraft:decorated"
+    },
+    "decorator": {
+      "type": "minecraft:count",
+      "config": {
+        "count": 5
+      }
     }
   },
   "type": "minecraft:decorated"

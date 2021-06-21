@@ -4,14 +4,26 @@
       "config": {},
       "type": "minecraft:nope"
     },
-    "decorator": {
-      "config": {
-        "bottom_offset": 16,
-        "top_offset": 0,
-        "maximum": 80
+    "decorators": [
+      {
+        "config": {
+          "count": 5
+        },
+        "type": "minecraft:count"
       },
-      "type": "minecraft:range"
-    }
+      {
+        "config": {},
+        "type": "minecraft:square"
+      },
+      {
+        "config": {
+          "bottom_offset": 16,
+          "top_offset": 0,
+          "maximum": 80
+        },
+        "type": "minecraft:range"
+      }
+    ]
   },
-  "type": "minecraft:decorated"
+  "type": "worldgenupdater:array_decorated"
 }

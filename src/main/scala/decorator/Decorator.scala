@@ -18,6 +18,8 @@ class Decorator[DC <: DecoratorConfig](configCodec: Codec[DC]) {
 
     def process(config: DC, feature: ConfiguredFeature[_, _]): ConfiguredFeature[_, _] =
         ConfiguredFeature(Features.DECORATED, DecoratedFeatureConfig(feature, ConfiguredDecorator(this, config)))
+
+    override def toString: String = Registry[Decorator[_]].getId(this).map(_.toString).getOrElse(super.toString)
 }
 
 object Decorator {

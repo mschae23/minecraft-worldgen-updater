@@ -21,7 +21,7 @@ lazy val root = project
         idePackagePrefix := Some("de.martenschaefer.minecraft.worldgenupdater"),
 
         libraryDependencies ++= Seq(
-            "de.martenschaefer" %% "data-api" % "2.0.0",
+            "de.martenschaefer" %% "data-api" % "2.1.0",
 
             "org.typelevel" %% "cats-core" % "2.6.1",
             // "org.typelevel" %% "cats-effect" % "3.1.1"
