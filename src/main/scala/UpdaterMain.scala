@@ -4,10 +4,10 @@ import java.io.{ File, FileInputStream, FileWriter, InputStream, IOException }
 import java.nio.charset.StandardCharsets
 import java.util.Scanner
 import scala.util.Using
-import de.martenschaefer.data.serialization.{ Codec, Decoder, Element, JsonCodecs }
+import de.martenschaefer.data.serialization.{ Codec, Decoder, Element, ElementError, JsonCodecs }
 import de.martenschaefer.data.serialization.JsonCodecs.given
 import de.martenschaefer.data.util.Either._
-import feature.ConfiguredFeature
+import feature.{ ConfiguredFeature, Feature, FeatureConfig }
 
 object UpdaterMain {
     val NAMESPACE = "worldgenupdater"
@@ -32,7 +32,16 @@ object UpdaterMain {
             }
         }
 
-        val targetFeature = originFeature.feature.process(originFeature.config)
+        val targetFeatureWriter: FeatureProcessResult = originFeature.feature.process(originFeature.config)
+        val warnings: List[String] = targetFeatureWriter.written.map(_.toString).distinct
+        val targetFeature: ConfiguredFeature[_, _] = targetFeatureWriter.value
+
+        if (!warnings.isEmpty) {
+            println("Warnings:")
+            println()
+            println(warnings.mkString("", "\n", ""))
+            println()
+        }
 
         val targetFeatureString: String = Codec[ConfiguredFeature[_, _]].encode(targetFeature)(using JsonCodecs.prettyJsonEncoder) match {
             case Right(json) => json

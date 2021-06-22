@@ -4,10 +4,7 @@
       "config": {
         "feature": {
           "config": {
-            "feature": {
-              "config": {},
-              "type": "minecraft:nope"
-            },
+            "feature": "minecraft:ore_iron",
             "decorator": {
               "config": {
                 "height": {
@@ -33,10 +30,10 @@
       "type": "minecraft:decorated"
     },
     "decorator": {
-      "type": "minecraft:count",
       "config": {
         "count": 5
-      }
+      },
+      "type": "minecraft:count"
     }
   },
   "type": "minecraft:decorated"

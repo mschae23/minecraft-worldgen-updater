@@ -11,6 +11,8 @@ import de.martenschaefer.minecraft.worldgenupdater.util.YOffset
 
 trait HeightProvider {
     val providerType: HeightProviderType[_]
+
+    val process: HeightProvider = this
 }
 
 object HeightProvider {
@@ -56,6 +58,10 @@ case class ConstantHeightProvider(val value: YOffset) extends HeightProvider der
 
 case class UniformHeightProvider(val minInclusive: YOffset, val maxInclusive: YOffset) extends HeightProvider derives Codec {
     override val providerType: HeightProviderType[_] = HeightProviderType.UNIFORM
+
+    override val process: HeightProvider =
+        if (this.minInclusive == this.maxInclusive) ConstantHeightProvider(this.minInclusive)
+        else this
 }
 
 case class BiasedToBottomHeightProvider(val minInclusive: YOffset, val maxInclusive: YOffset, val inner: Int = 1) extends HeightProvider {

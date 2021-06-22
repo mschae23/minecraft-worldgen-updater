@@ -1,6 +1,7 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package decorator
 
+import cats.data.Writer
 import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.registry.impl.SimpleRegistry
 import de.martenschaefer.data.registry.Registry.register
@@ -16,8 +17,8 @@ class Decorator[DC <: DecoratorConfig](configCodec: Codec[DC]) {
 
     def configure(config: DC): ConfiguredDecorator[DC, Decorator[DC]] = ConfiguredDecorator(this, config)
 
-    def process(config: DC, feature: ConfiguredFeature[_, _]): ConfiguredFeature[_, _] =
-        ConfiguredFeature(Features.DECORATED, DecoratedFeatureConfig(feature, ConfiguredDecorator(this, config)))
+    def process(config: DC, feature: ConfiguredFeature[_, _]): FeatureProcessResult =
+        Writer(List(), ConfiguredFeature(Features.DECORATED, DecoratedFeatureConfig(feature, ConfiguredDecorator(this, config))))
 
     override def toString: String = Registry[Decorator[_]].getId(this).map(_.toString).getOrElse(super.toString)
 }

@@ -22,6 +22,8 @@ class DefaultFeatureCodec(codec: Codec[ConfiguredFeature[_, _]]) extends Codec[C
                 else
                     Left(errors)
 
+            case Element.StringElement(_) => Right(ConfiguredFeature(DefaultFeature(element), null))
+
             case _ => Left(errors)
         }
 

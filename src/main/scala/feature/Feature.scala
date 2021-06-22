@@ -1,6 +1,7 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package feature
 
+import cats.data.Writer
 import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
@@ -14,7 +15,7 @@ class Feature[FC <: FeatureConfig](val configCodec: Codec[FC]) {
 
     def configure(config: FC): ConfiguredFeature[FC, Feature[FC]] = ConfiguredFeature(this, config)
 
-    def process(config: FC): ConfiguredFeature[_, _] = ConfiguredFeature(this, config)
+    def process(config: FC): FeatureProcessResult = Writer(List(), ConfiguredFeature(this, config))
 
     override def toString: String = Registry[Feature[_]].getId(this).map(_.toString).getOrElse(super.toString)
 }

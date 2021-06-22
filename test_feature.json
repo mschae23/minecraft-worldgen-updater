@@ -1,9 +1,6 @@
 {
   "config": {
-    "feature": {
-      "config": {},
-      "type": "minecraft:nope"
-    },
+    "feature": "minecraft:ore_iron",
     "decorators": [
       {
         "config": {
@@ -14,6 +11,20 @@
       {
         "config": {},
         "type": "minecraft:square"
+      },
+      {
+        "config": {
+          "height": {
+            "min_inclusive": {
+              "absolute": 31
+            },
+            "max_inclusive": {
+              "absolute": 31
+            },
+            "type": "minecraft:uniform"
+          }
+        },
+        "type": "minecraft:range"
       },
       {
         "config": {
