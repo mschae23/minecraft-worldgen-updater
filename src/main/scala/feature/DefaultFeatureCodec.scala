@@ -3,28 +3,28 @@ package feature
 
 import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.serialization.{ Codec, Element, Result }
-import de.martenschaefer.data.util.Either._
+import de.martenschaefer.data.util.DataResult._
 
 class DefaultFeatureCodec(codec: Codec[ConfiguredFeature[_, _]]) extends Codec[ConfiguredFeature[_, _]] {
     override def encodeElement(value: ConfiguredFeature[_, _]): Result[Element] = value match {
-        case ConfiguredFeature(DefaultFeature(element), _) => Right(element)
+        case ConfiguredFeature(DefaultFeature(element), _) => Success(element)
         case feature => codec.encodeElement(feature)
     }
 
     override def decodeElement(element: Element): Result[ConfiguredFeature[_, _]] = codec.decodeElement(element) match {
-        case Left(errors) => element match {
+        case Failure(errors, lifecycle) => element match {
             case Element.ObjectElement(map) =>
                 if (map.contains("type") && map.contains("config"))
                     if (errors.exists(_.isInstanceOf[Registry.UnknownRegistryIdError]))
-                        Right(ConfiguredFeature(DefaultFeature(element), null))
+                        Success(ConfiguredFeature(DefaultFeature(element), null), lifecycle)
                     else
-                        Left(errors)
+                        Failure(errors, lifecycle)
                 else
-                    Left(errors)
+                    Failure(errors, lifecycle)
 
-            case Element.StringElement(_) => Right(ConfiguredFeature(DefaultFeature(element), null))
+            case Element.StringElement(_) => Success(ConfiguredFeature(DefaultFeature(element), null), lifecycle)
 
-            case _ => Left(errors)
+            case _ => Failure(errors, lifecycle)
         }
 
         case result => result

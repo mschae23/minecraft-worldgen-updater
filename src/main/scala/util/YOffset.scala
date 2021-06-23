@@ -3,7 +3,6 @@ package util
 
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.data.util._
-import de.martenschaefer.data.util.Either._
 
 enum YOffset(offset: Int) {
     case Fixed(absolute: Int) extends YOffset(absolute)

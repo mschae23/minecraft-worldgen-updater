@@ -6,7 +6,6 @@ import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.data.util._
-import de.martenschaefer.data.util.Either._
 
 trait IntProvider {
     val providerType: IntProviderType[_]

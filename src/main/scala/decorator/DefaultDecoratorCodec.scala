@@ -3,26 +3,26 @@ package decorator
 
 import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.serialization.{ Codec, Element, Result }
-import de.martenschaefer.data.util.Either._
+import de.martenschaefer.data.util.DataResult._
 
 class DefaultDecoratorCodec(codec: Codec[ConfiguredDecorator[_, _]]) extends Codec[ConfiguredDecorator[_, _]] {
     override def encodeElement(value: ConfiguredDecorator[_, _]): Result[Element] = value match {
-        case ConfiguredDecorator(DefaultDecorator(element), _) => Right(element)
+        case ConfiguredDecorator(DefaultDecorator(element), _) => Success(element, codec.lifecycle)
         case decorator => codec.encodeElement(decorator)
     }
 
     override def decodeElement(element: Element): Result[ConfiguredDecorator[_, _]] = codec.decodeElement(element) match {
-        case Left(errors) => element match {
+        case Failure(errors, lifecycle) => element match {
             case Element.ObjectElement(map) =>
                 if (map.contains("type") && map.contains("config"))
                     if (errors.exists(_.isInstanceOf[Registry.UnknownRegistryIdError]))
-                        Right(ConfiguredDecorator(DefaultDecorator(element), null))
+                        Success(ConfiguredDecorator(DefaultDecorator(element), null), lifecycle)
                     else
-                        Left(errors)
+                        Failure(errors, lifecycle)
                 else
-                    Left(errors)
+                    Failure(errors, lifecycle)
 
-            case _ => Left(errors)
+            case _ => Failure(errors, lifecycle)
         }
 
         case result => result

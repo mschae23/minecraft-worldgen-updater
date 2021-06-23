@@ -6,7 +6,8 @@ import java.util.Scanner
 import scala.util.Using
 import de.martenschaefer.data.serialization.{ Codec, Decoder, Element, ElementError, JsonCodecs }
 import de.martenschaefer.data.serialization.JsonCodecs.given
-import de.martenschaefer.data.util.Either._
+import de.martenschaefer.data.util._
+import de.martenschaefer.data.util.DataResult._
 import feature.{ ConfiguredFeature, Feature, FeatureConfig }
 
 object UpdaterMain {
@@ -21,39 +22,75 @@ object UpdaterMain {
         val originFile = File(args(0))
         val targetFile = File(args(1))
 
+        this.processFile(originFile, targetFile)
+    }
+
+    enum FileProcessResult {
+        case Normal
+        case Warnings
+        case Errors
+
+        def +(other: FileProcessResult): FileProcessResult = other match {
+            case Errors => Errors
+            case _ if this == Errors => Errors
+            case Warnings => Warnings
+            case _ => this
+        }
+    }
+
+    def processFile(originFile: File, targetFile: File): FileProcessResult = {
+        var lifecycle = Lifecycle.Stable
+
         val originString = read(originFile)
         val originFeature: ConfiguredFeature[_, _] = Codec[ConfiguredFeature[_, _]].decode(originString) match {
-            case Right(feature) => feature
-            case Left(errors) => {
-                println("Errors decoding origin feature:")
+            case Success(feature, l) => lifecycle += l
+                feature
+            case Failure(errors, _) => {
+                println(s"Errors decoding origin feature:")
                 println()
                 println(errors.mkString("", "\n", ""))
-                return
+                return FileProcessResult.Errors
             }
         }
 
         val targetFeatureWriter: FeatureProcessResult = originFeature.feature.process(originFeature.config)
-        val warnings: List[String] = targetFeatureWriter.written.map(_.toString).distinct
+        val warnings: List[ElementError] = targetFeatureWriter.written
         val targetFeature: ConfiguredFeature[_, _] = targetFeatureWriter.value
+
+        var foundWarnings = false
 
         if (!warnings.isEmpty) {
             println("Warnings:")
             println()
             println(warnings.mkString("", "\n", ""))
             println()
+            foundWarnings = true
         }
 
         val targetFeatureString: String = Codec[ConfiguredFeature[_, _]].encode(targetFeature)(using JsonCodecs.prettyJsonEncoder) match {
-            case Right(json) => json
-            case Left(errors) => {
+            case Success(json, l) => lifecycle += l
+                json
+            case Failure(errors, _) => {
                 println("Errors encoding configured feature:")
                 println()
                 println(errors.mkString("", "\n", ""))
-                return
+                return FileProcessResult.Errors
             }
         }
 
+        lifecycle match {
+            case Lifecycle.Experimental => println()
+                println("You're using experimental features.")
+                foundWarnings = true
+            case Lifecycle.Deprecated(since) => println()
+                println(s"You're using features that are deprecated since version $since.")
+                foundWarnings = true
+            case _ =>
+        }
+
         write(targetFile, targetFeatureString)
+
+        return if (foundWarnings) FileProcessResult.Warnings else FileProcessResult.Normal
     }
 
     @throws[IOException]
