@@ -2,7 +2,7 @@ package de.martenschaefer.minecraft.worldgenupdater
 package decorator.definition
 
 import cats.data.Writer
-import de.martenschaefer.data.serialization.{ Codec, ValidationError }
+import de.martenschaefer.data.serialization.{ Codec, ElementNode, ValidationError }
 import de.martenschaefer.minecraft.worldgenupdater.feature.ConfiguredFeature
 import de.martenschaefer.minecraft.worldgenupdater.valueprovider.ConstantIntProvider
 import decorator.Decorator

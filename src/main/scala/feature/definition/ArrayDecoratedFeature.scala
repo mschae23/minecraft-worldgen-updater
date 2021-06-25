@@ -6,6 +6,7 @@ import cats.data.Writer
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.minecraft.worldgenupdater.decorator.ConfiguredDecorator
 import feature.{ ConfiguredFeature, Feature, Features }
+import util._
 
 case object ArrayDecoratedFeature extends Feature(Codec[ArrayDecoratedFeatureConfig]) {
     override def process(config: ArrayDecoratedFeatureConfig): FeatureProcessResult = {
@@ -17,8 +18,7 @@ case object ArrayDecoratedFeature extends Feature(Codec[ArrayDecoratedFeatureCon
                         .mapBoth((warnings, feature) => head.decorator.process(head.config, feature)
                             .mapWritten(warnings2 => warnings.map(_.withPrependedPath("feature")) ::: warnings2
                             .map(_.withPrependedPath("decorator"))).mapWritten(_.map(_.withPrependedPath("config"))).run))
-                case Nil => writer.value.feature.process(writer.value.config)
-                    .mapWritten(_ ::: writer.written)
+                case Nil => writer.map(_ => writer.value)
             }
 
         loop(config.decorators.reverse, Writer(List(), config.feature))

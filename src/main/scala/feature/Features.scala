@@ -7,7 +7,9 @@ import de.martenschaefer.data.util.Identifier
 import definition._
 
 object Features {
-    val NOPE = register("nope", new Feature(Codec[DefaultFeatureConfig]))
+    val NO_OP = register("no_op", new Feature(Codec[DefaultFeatureConfig]))
+    val ORE = register("ore", OreFeature)
+    val NO_SURFACE_ORE = register("no_surface_ore", NoSurfaceOreFeature)
     val DECORATED = register("decorated", DecoratedFeature)
     val ARRAY_DECORATED = registerCustom("array_decorated", ArrayDecoratedFeature)
 

@@ -4,7 +4,24 @@
       "config": {
         "feature": {
           "config": {
-            "feature": "minecraft:ore_iron",
+            "feature": {
+              "config": {
+                "targets": [
+                  {
+                    "target": {
+                      "predicate_type": "minecraft:always_true"
+                    },
+                    "state": {
+                      "Name": "minecraft:iron_ore",
+                      "Properties": {}
+                    }
+                  }
+                ],
+                "size": 79,
+                "discard_chance_on_air_exposure": 0.0
+              },
+              "type": "minecraft:ore"
+            },
             "decorator": {
               "config": {
                 "height": {
