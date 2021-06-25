@@ -22,18 +22,33 @@ object UpdaterMain {
         val originFile = File(args(0))
         val targetFile = File(args(1))
 
-        this.processFile(originFile, targetFile)
+        val result = this.processFile(originFile, targetFile)
+        println()
+
+        result match {
+            case FileProcessResult.Errors(errors) => println("Errors found:")
+                println(errors.mkString("- ", "\n- ", ""))
+            case FileProcessResult.Warnings(warnings) => println("Warnings found:")
+                println(warnings.mkString("- ", "\n- ", ""))
+            case _ =>
+        }
     }
 
     enum FileProcessResult {
         case Normal
-        case Warnings
-        case Errors
+        case Warnings(val warnings: List[ElementError])
+        case Errors(val errors: List[ElementError])
 
         def +(other: FileProcessResult): FileProcessResult = other match {
-            case Errors => Errors
-            case _ if this == Errors => Errors
-            case Warnings => Warnings
+            case Errors(errors) => this match {
+                case Errors(errors2) => Errors(errors2 ::: errors)
+                case _ => Errors(errors)
+            }
+            case _ if this.isInstanceOf[Errors] => this
+            case Warnings(warnings) => this match {
+                case Warnings(warnings2) => Warnings(warnings2 ::: warnings)
+                case _ => Warnings(warnings)
+            }
             case _ => this
         }
     }
@@ -45,12 +60,7 @@ object UpdaterMain {
         val originFeature: ConfiguredFeature[_, _] = Codec[ConfiguredFeature[_, _]].decode(originString) match {
             case Success(feature, l) => lifecycle += l
                 feature
-            case Failure(errors, _) => {
-                println(s"Errors decoding origin feature:")
-                println()
-                println(errors.mkString("", "\n", ""))
-                return FileProcessResult.Errors
-            }
+            case Failure(errors, _) => return FileProcessResult.Errors(errors.toList)
         }
 
         val targetFeatureWriter: FeatureProcessResult = originFeature.feature.process(originFeature.config)
@@ -59,22 +69,13 @@ object UpdaterMain {
 
         var foundWarnings = false
 
-        if (!warnings.isEmpty) {
-            println("Warnings:")
-            println()
-            println(warnings.mkString("", "\n", ""))
-            println()
-            foundWarnings = true
-        }
+        if (!warnings.isEmpty) foundWarnings = true
 
         val targetFeatureString: String = Codec[ConfiguredFeature[_, _]].encode(targetFeature)(using JsonCodecs.prettyJsonEncoder) match {
             case Success(json, l) => lifecycle += l
                 json
             case Failure(errors, _) => {
-                println("Errors encoding configured feature:")
-                println()
-                println(errors.mkString("", "\n", ""))
-                return FileProcessResult.Errors
+                return FileProcessResult.Errors(errors.toList)
             }
         }
 
@@ -90,7 +91,7 @@ object UpdaterMain {
 
         write(targetFile, targetFeatureString)
 
-        return if (foundWarnings) FileProcessResult.Warnings else FileProcessResult.Normal
+        return if (foundWarnings) FileProcessResult.Warnings(warnings) else FileProcessResult.Normal
     }
 
     @throws[IOException]
