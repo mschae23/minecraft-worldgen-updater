@@ -29,9 +29,7 @@ object IntProvider {
     IntProviderTypes // init
 }
 
-trait IntProviderType[P <: IntProvider] {
-    val codec: Codec[P]
-}
+case class IntProviderType[P <: IntProvider](val codec: Codec[P])
 
 object IntProviderType {
     given Registry[IntProviderType[_]] = new SimpleRegistry(Identifier("minecraft", "int_provider_type"))
@@ -43,10 +41,8 @@ object IntProviderTypes {
     val BIASED_TO_BOTTOM = register("biased_to_bottom", Codec[BiasedToBottomIntProvider])
     val CLAMPED = register("clamped", Codec[ClampedIntProvider])
 
-    private def register[P <: IntProvider](name: String, providerCodec: Codec[P]): IntProviderType[P] = {
-        val providerType = new IntProviderType[P] {
-            val codec = providerCodec
-        }
+    private def register[P <: IntProvider](name: String, codec: Codec[P]): IntProviderType[P] = {
+        val providerType = IntProviderType(codec)
 
         providerType.register(Identifier("minecraft", name))
         providerType

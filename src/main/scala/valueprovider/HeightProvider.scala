@@ -28,9 +28,7 @@ object HeightProvider {
     })
 }
 
-trait HeightProviderType[P <: HeightProvider] {
-    val codec: Codec[P]
-}
+case class HeightProviderType[P <: HeightProvider](val codec: Codec[P])
 
 object HeightProviderType {
     given Registry[HeightProviderType[_]] = new SimpleRegistry(Identifier("minecraft", "height_provider_type"))
@@ -41,10 +39,8 @@ object HeightProviderType {
     val VERY_BIASED_TO_BOTTOM = register("very_biased_to_bottom", Codec[VeryBiasedToBottomHeightProvider])
     val TRAPEZOID = register("trapezoid", Codec[TrapezoidHeightProvider])
 
-    private def register[P <: HeightProvider](name: String, providerCodec: Codec[P]): HeightProviderType[P] = {
-        val providerType = new HeightProviderType[P] {
-            val codec = providerCodec
-        }
+    private def register[P <: HeightProvider](name: String, codec: Codec[P]): HeightProviderType[P] = {
+        val providerType = HeightProviderType(codec)
 
         providerType.register(Identifier("minecraft", name))
         providerType

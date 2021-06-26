@@ -17,9 +17,7 @@ object RuleTest {
     given Codec[RuleTest] = Registry[RuleTestType[_]].dispatch("predicate_type", _.ruleType, _.codec)
 }
 
-trait RuleTestType[P <: RuleTest] {
-    val codec: Codec[P]
-}
+case class RuleTestType[P <: RuleTest](val codec: Codec[P])
 
 object RuleTestType {
     given Registry[RuleTestType[_]] = new SimpleRegistry(Identifier("minecraft", "rule_test_type"))
@@ -31,10 +29,8 @@ object RuleTestType {
     val RANDOM_BLOCK_MATCH = register("random_block_match", Codec[RandomBlockMatchRuleTest])
     val RANDOM_BLOCKSTATE_MATCH = register("random_blockstate_match", Codec[RandomBlockStateMatchRuleTest])
 
-    private def register[P <: RuleTest](name: String, ruleCodec: Codec[P]): RuleTestType[P] = {
-        val ruleType = new RuleTestType[P] {
-            val codec: Codec[P] = ruleCodec
-        }
+    private def register[P <: RuleTest](name: String, codec: Codec[P]): RuleTestType[P] = {
+        val ruleType = RuleTestType[P](codec)
 
         ruleType.register(Identifier("minecraft", name))
         ruleType
@@ -46,7 +42,9 @@ case class AlwaysTrueRuleTest() extends RuleTest {
 }
 
 object AlwaysTrueRuleTest {
-    lazy val INSTANCE = AlwaysTrueRuleTest()
+    lazy val INSTANCE = new AlwaysTrueRuleTest()
+
+    def apply: AlwaysTrueRuleTest = INSTANCE
 
     given Codec[AlwaysTrueRuleTest] = Codec.unit(() => INSTANCE)
 }
