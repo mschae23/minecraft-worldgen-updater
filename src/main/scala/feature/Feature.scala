@@ -15,7 +15,7 @@ class Feature[FC <: FeatureConfig](val configCodec: Codec[FC]) {
 
     def configure(config: FC): ConfiguredFeature[FC, Feature[FC]] = ConfiguredFeature(this, config)
 
-    def process(config: FC): FeatureProcessResult = Writer(List(), ConfiguredFeature(this, config))
+    def process(config: FC): FeatureProcessResult = Writer(List.empty, ConfiguredFeature(this, config))
 
     override def toString: String = Registry[Feature[_]].getId(this).map(_.toString).getOrElse(super.toString)
 }

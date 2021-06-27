@@ -72,6 +72,9 @@ object UpdaterMain {
         if (Files.exists(targetDirectory) && !Files.isDirectory(targetDirectory))
             throw new IllegalArgumentException(s"${ targetDirectory.getFileName } is not a directory")
 
+        var foundWarnings = false
+        var foundErrors = false
+
         Using(Files.newDirectoryStream(originDirectory)) { directoryStream =>
             for (path <- directoryStream.asScala if path.getFileName.toString.endsWith(JSON_SUFFIX)) {
                 println(s"Processing ${ path.getFileName } ...")
@@ -83,16 +86,20 @@ object UpdaterMain {
                         println("Errors found:")
                         println(errors.mkString("- ", "\n- ", ""))
                         println()
+                        foundErrors = true
                     case FileProcessResult.Warnings(warnings) => println()
                         println("Warnings found:")
                         println(warnings.mkString("- ", "\n- ", ""))
                         println()
+                        foundWarnings = true
                     case _ =>
                 }
             }
         }
 
-        println("Done.")
+        val notice = if (foundErrors) " with errors" else if (foundWarnings) " with warnings" else ""
+
+        println(s"Done${ notice }.")
     }
 
     def processFile(originFile: Path, targetFile: Path): FileProcessResult = {
@@ -123,10 +130,10 @@ object UpdaterMain {
 
         lifecycle match {
             case Lifecycle.Experimental =>
-                warnings = ValidationError(_ => "Experimental features used.", null) :: warnings
+                warnings = ValidationError(_ => "Experimental features used.", List.empty) :: warnings
                 foundWarnings = true
             case Lifecycle.Deprecated(since) =>
-                warnings = ValidationError(_ => s"Used features that are deprecated since $since.", null) :: warnings
+                warnings = ValidationError(_ => s"Used features that are deprecated since $since.", List.empty) :: warnings
                 foundWarnings = true
             case _ =>
         }

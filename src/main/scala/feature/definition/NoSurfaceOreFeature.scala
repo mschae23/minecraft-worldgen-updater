@@ -7,5 +7,5 @@ import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, Features }
 
 case object NoSurfaceOreFeature extends Feature(OreFeatureConfig.old1Codec) {
     override def process(config: OreFeatureConfig): FeatureProcessResult =
-        Writer(List(), ConfiguredFeature(Features.ORE, OreFeatureConfig(config.targets, config.size, 1f)))
+        Writer(List.empty, ConfiguredFeature(Features.ORE, OreFeatureConfig(config.targets, config.size, 1f)))
 }

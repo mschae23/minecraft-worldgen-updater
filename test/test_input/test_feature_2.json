@@ -1,0 +1,53 @@
+{
+  "config": {
+    "feature": {
+      "config": {
+        "target": {
+          "predicate_type": "minecraft:always_true"
+        },
+        "state": {
+          "Name": "minecraft:iron_ore",
+          "Properties": {
+          }
+        },
+        "size": 79
+      },
+      "type": "minecraft:ore"
+    },
+    "decorators": [
+      {
+        "config": {
+          "count": 5
+        },
+        "type": "minecraft:count"
+      },
+      {
+        "config": {},
+        "type": "minecraft:square"
+      },
+      {
+        "config": {
+          "height": {
+            "min_inclusive": {
+              "absolute": 31
+            },
+            "max_inclusive": {
+              "absolute": 31
+            },
+            "type": "minecraft:uniform"
+          }
+        },
+        "type": "minecraft:range"
+      },
+      {
+        "config": {
+          "bottom_offset": 16,
+          "top_offset": 0,
+          "maximum": 80
+        },
+        "type": "minecraft:range"
+      }
+    ]
+  },
+  "type": "worldgenupdater:array_decorated"
+}

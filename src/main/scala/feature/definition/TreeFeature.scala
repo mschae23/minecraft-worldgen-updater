@@ -39,6 +39,6 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                 0,
                 config.heightmap
             )), ConfiguredDecorator(Decorators.WATER_DEPTH_THRESHOLD, WaterDepthThresholdDecoratorConfig(config.maxWaterDepth))))
-        } else Writer(List(), ConfiguredFeature(Features.TREE, config.process))
+        } else Writer(List.empty, ConfiguredFeature(Features.TREE, config.process))
     }
 }
