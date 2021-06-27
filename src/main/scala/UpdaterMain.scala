@@ -1,38 +1,21 @@
 package de.martenschaefer.minecraft.worldgenupdater
 
-import java.io.{ File, FileInputStream, FileWriter, InputStream, IOException }
+import java.io.{ File, FileInputStream, InputStream, IOException, OutputStreamWriter, Writer }
 import java.nio.charset.StandardCharsets
+import java.nio.file.{ Files, Path, Paths, StandardOpenOption }
 import java.util.Scanner
+import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.util.Using
 import de.martenschaefer.data.serialization.{ Codec, Decoder, Element, ElementError, JsonCodecs }
 import de.martenschaefer.data.serialization.JsonCodecs.given
 import de.martenschaefer.data.util._
 import de.martenschaefer.data.util.DataResult._
-import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, FeatureConfig }
+import feature.{ ConfiguredFeature, Feature, FeatureConfig, FeatureProcessResult }
 
 object UpdaterMain {
     val NAMESPACE = "worldgenupdater"
 
-    def main(args: Array[String]): Unit = {
-        if (args.length < 2) {
-            println("At least two paramaters are required.")
-            return
-        }
-
-        val originFile = File(args(0))
-        val targetFile = File(args(1))
-
-        val result = this.processFile(originFile, targetFile)
-        println()
-
-        result match {
-            case FileProcessResult.Errors(errors) => println("Errors found:")
-                println(errors.mkString("- ", "\n- ", ""))
-            case FileProcessResult.Warnings(warnings) => println("Warnings found:")
-                println(warnings.mkString("- ", "\n- ", ""))
-            case _ =>
-        }
-    }
+    private val JSON_SUFFIX = ".json"
 
     enum FileProcessResult {
         case Normal
@@ -53,7 +36,66 @@ object UpdaterMain {
         }
     }
 
-    def processFile(originFile: File, targetFile: File): FileProcessResult = {
+    def main(args: Array[String]): Unit = {
+        if (args.length < 2) {
+            println("At least two paramaters are required.")
+            return
+        }
+
+        val originFile = Paths.get(args(0))
+        val targetFile = Paths.get(args(1))
+
+        if (Files.isDirectory(originFile))
+            this.processDirectory(originFile, targetFile)
+        else if (Files.isRegularFile(originFile))
+            this.processFeatureFile(originFile, targetFile)
+    }
+
+    def processFeatureFile(originFile: Path, targetFile: Path): FileProcessResult = {
+        val result = this.processFile(originFile, targetFile)
+
+        result match {
+            case FileProcessResult.Errors(errors) => println("Errors found:")
+                println(errors.mkString("- ", "\n- ", ""))
+            case FileProcessResult.Warnings(warnings) => println("Warnings found:")
+                println(warnings.mkString("- ", "\n- ", ""))
+            case _ =>
+        }
+
+        result
+    }
+
+    def processDirectory(originDirectory: Path, targetDirectory: Path): Unit = {
+        if (!Files.exists(originDirectory) || ! Files.isDirectory(originDirectory))
+            throw new IllegalArgumentException(s"${ originDirectory.getFileName } doesn't exist or is not a directory")
+
+        if (Files.exists(targetDirectory) && !Files.isDirectory(targetDirectory))
+            throw new IllegalArgumentException(s"${ targetDirectory.getFileName } is not a directory")
+
+        Using(Files.newDirectoryStream(originDirectory)) { directoryStream =>
+            for (path <- directoryStream.asScala if path.getFileName.toString.endsWith(JSON_SUFFIX)) {
+                println(s"Processing ${ path.getFileName } ...")
+
+                val result = processFile(path, targetDirectory.resolve(path.getFileName))
+
+                result match {
+                    case FileProcessResult.Errors(errors) => println()
+                        println("Errors found:")
+                        println(errors.mkString("- ", "\n- ", ""))
+                        println()
+                    case FileProcessResult.Warnings(warnings) => println()
+                        println("Warnings found:")
+                        println(warnings.mkString("- ", "\n- ", ""))
+                        println()
+                    case _ =>
+                }
+            }
+        }
+
+        println("Done.")
+    }
+
+    def processFile(originFile: Path, targetFile: Path): FileProcessResult = {
         var lifecycle = Lifecycle.Stable
 
         val originString = read(originFile)
@@ -95,9 +137,9 @@ object UpdaterMain {
     }
 
     @throws[IOException]
-    def read(file: File): String = {
+    def read(file: Path): String = {
         Using.Manager { use =>
-            val in: InputStream = use(FileInputStream(file))
+            val in: InputStream = use(Files.newInputStream(file))
             val scanner: Scanner = use(new Scanner(in, StandardCharsets.UTF_8.name))
 
             scanner.useDelimiter("\\A").next()
@@ -105,11 +147,11 @@ object UpdaterMain {
     }
 
     @throws[IOException]
-    def write(file: File, string: String): Unit = {
+    def write(file: Path, content: String): Unit = {
         Using.Manager { use =>
-            val out: FileWriter = use(FileWriter(file))
+            val out: Writer = use(OutputStreamWriter(Files.newOutputStream(file, StandardOpenOption.CREATE)))
 
-            out.write(string)
+            out.write(content)
         }
     }
 }
