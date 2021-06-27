@@ -3,7 +3,7 @@ package feature.definition
 
 import cats.data.Writer
 import de.martenschaefer.data.serialization.Codec
-import feature.{ ConfiguredFeature, Feature, Features }
+import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, Features }
 
 case object NoSurfaceOreFeature extends Feature(OreFeatureConfig.old1Codec) {
     override def process(config: OreFeatureConfig): FeatureProcessResult =

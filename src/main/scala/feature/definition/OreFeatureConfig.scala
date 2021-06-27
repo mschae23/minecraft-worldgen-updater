@@ -4,7 +4,7 @@ package feature.definition
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.minecraft.worldgenupdater.feature.definition.OreFeatureConfig.Target
 import de.martenschaefer.minecraft.worldgenupdater.util.{ BlockState, RuleTest }
-import feature.{ definition, FeatureConfig }
+import feature.FeatureConfig
 
 case class OreFeatureConfig(val targets: List[Target], val size: Int, val discardChanceOnAirExposure: Float) extends FeatureConfig
 

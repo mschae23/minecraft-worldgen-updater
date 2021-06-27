@@ -6,35 +6,92 @@
           "config": {
             "feature": {
               "config": {
-                "targets": [
-                  {
-                    "target": {
-                      "predicate_type": "minecraft:always_true"
+                "feature": {
+                  "config": {
+                    "trunk_provider": {
+                      "state": {
+                        "Name": "minecraft:oak_log",
+                        "Properties": {
+                          "axis": "y"
+                        }
+                      },
+                      "type": "minecraft:simple_state_provider"
                     },
-                    "state": {
-                      "Name": "minecraft:iron_ore",
-                      "Properties": {}
-                    }
-                  }
-                ],
-                "size": 79,
-                "discard_chance_on_air_exposure": 0.0
+                    "trunk_placer": {
+                      "base_height": 5,
+                      "height_rand_a": 2,
+                      "height_rand_b": 3,
+                      "type": "minecraft:straight_trunk_placer"
+                    },
+                    "foliage_provider": {
+                      "entries": [
+                        {
+                          "data": {
+                            "Name": "minecraft:azalea_leaves",
+                            "Properties": {}
+                          },
+                          "weight": 5
+                        },
+                        {
+                          "data": {
+                            "Name": "minecraft:flowering_azalea_leaves",
+                            "Properties": {}
+                          },
+                          "weight": 1
+                        }
+                      ],
+                      "type": "minecraft:weighted_state_provider"
+                    },
+                    "sapling_provider": {
+                      "state": {
+                        "Name": "minecraft:oak_sapling",
+                        "Properties": {}
+                      },
+                      "type": "minecraft:simple_state_provider"
+                    },
+                    "foliage_placer": {
+                      "radius": {
+                        "min_inclusive": 3,
+                        "max_inclusive": 5,
+                        "type": "minecraft:uniform"
+                      },
+                      "offset": 2,
+                      "height": 10,
+                      "type": "minecraft:blob_foliage_placer"
+                    },
+                    "dirt_provider": {
+                      "state": {
+                        "Name": "minecraft:dirt",
+                        "Properties": {}
+                      },
+                      "type": "minecraft:simple_state_provider"
+                    },
+                    "minimum_size": {
+                      "limit": 1,
+                      "lower_size": 0,
+                      "upper_size": 1,
+                      "type": "minecraft:two_layers_feature_size"
+                    },
+                    "decorators": [],
+                    "ignore_vines": false,
+                    "force_dirt": false
+                  },
+                  "type": "minecraft:tree"
+                },
+                "decorator": {
+                  "config": {
+                    "max_water_depth": 3
+                  },
+                  "type": "minecraft:water_depth_threshold"
+                }
               },
-              "type": "minecraft:ore"
+              "type": "minecraft:decorated"
             },
             "decorator": {
               "config": {
-                "height": {
-                  "min_inclusive": {
-                    "above_bottom": 16
-                  },
-                  "max_inclusive": {
-                    "above_bottom": 95
-                  },
-                  "type": "minecraft:uniform"
-                }
+                "heightmap": "OCEAN_FLOOR_WG"
               },
-              "type": "minecraft:range"
+              "type": "minecraft:heightmap"
             }
           },
           "type": "minecraft:decorated"

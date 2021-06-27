@@ -4,10 +4,10 @@ package decorator.definition
 import scala.annotation.tailrec
 import cats.data.Writer
 import de.martenschaefer.data.serialization.{ Codec, ValidationError }
-import de.martenschaefer.minecraft.worldgenupdater.feature.{ ConfiguredFeature, Features }
-import de.martenschaefer.minecraft.worldgenupdater.feature.definition.DecoratedFeatureConfig
-import de.martenschaefer.minecraft.worldgenupdater.valueprovider.ConstantIntProvider
 import decorator.{ ConfiguredDecorator, Decorator, Decorators }
+import feature.{ ConfiguredFeature, Features, FeatureProcessResult }
+import feature.definition.DecoratedFeatureConfig
+import valueprovider.ConstantIntProvider
 
 case object RangeDecorator extends Decorator(Codec[RangeDecoratorConfig]) {
     override def process(config: RangeDecoratorConfig, feature: ConfiguredFeature[_, _]): FeatureProcessResult =
@@ -20,7 +20,8 @@ case object RangeDecorator extends Decorator(Codec[RangeDecoratorConfig]) {
             case ConfiguredFeature(Features.DECORATED, config: DecoratedFeatureConfig) =>
                 config.decorator match {
                     case ConfiguredDecorator(Decorators.RANGE, _) => true
-                    case _ => loop(config.feature);
+                    case ConfiguredDecorator(Decorators.HEIGHTMAP, _) => true
+                    case _ => loop(config.feature)
                 }
             case _ => false
         }

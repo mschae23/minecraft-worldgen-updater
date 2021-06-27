@@ -5,7 +5,7 @@ import scala.annotation.tailrec
 import cats.data.Writer
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.minecraft.worldgenupdater.decorator.ConfiguredDecorator
-import feature.{ ConfiguredFeature, Feature, Features }
+import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, Features }
 import util._
 
 case object ArrayDecoratedFeature extends Feature(Codec[ArrayDecoratedFeatureConfig]) {

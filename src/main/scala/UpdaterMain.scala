@@ -8,7 +8,7 @@ import de.martenschaefer.data.serialization.{ Codec, Decoder, Element, ElementEr
 import de.martenschaefer.data.serialization.JsonCodecs.given
 import de.martenschaefer.data.util._
 import de.martenschaefer.data.util.DataResult._
-import feature.{ ConfiguredFeature, Feature, FeatureConfig }
+import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, FeatureConfig }
 
 object UpdaterMain {
     val NAMESPACE = "worldgenupdater"

@@ -2,7 +2,7 @@ package de.martenschaefer.minecraft.worldgenupdater
 package feature.definition
 
 import de.martenschaefer.data.serialization.{ Codec, ElementNode, ValidationError }
-import feature.Feature
+import feature.{ Feature, FeatureProcessResult }
 
 case object OreFeature extends Feature(Codec[OreFeatureConfig]) {
     override def process(config: OreFeatureConfig): FeatureProcessResult = {

@@ -8,7 +8,9 @@ import decorator.definition._
 
 object Decorators {
     val RANGE = register("range", RangeDecorator)
+    val HEIGHTMAP = register("heightmap", HeightmapDecorator)
     val COUNT = register("count", CountDecorator)
+    val WATER_DEPTH_THRESHOLD = register("water_depth_threshold", WaterDepthThresholdDecorator)
 
     private def register[DC <: DecoratorConfig](name: String, decorator: Decorator[DC]): Decorator[DC] = {
         decorator.register(Identifier("minecraft", name))

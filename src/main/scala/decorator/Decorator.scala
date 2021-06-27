@@ -7,9 +7,9 @@ import de.martenschaefer.data.registry.impl.SimpleRegistry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.data.util._
-import de.martenschaefer.minecraft.worldgenupdater.feature.{ ConfiguredFeature, Features }
-import de.martenschaefer.minecraft.worldgenupdater.feature.definition.DecoratedFeatureConfig
 import decorator.definition._
+import feature.{ ConfiguredFeature, Features, FeatureProcessResult }
+import feature.definition.DecoratedFeatureConfig
 
 class Decorator[DC <: DecoratorConfig](configCodec: Codec[DC]) {
     val codec: Codec[ConfiguredDecorator[DC, Decorator[DC]]] =

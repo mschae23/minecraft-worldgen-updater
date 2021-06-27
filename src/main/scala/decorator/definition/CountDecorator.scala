@@ -3,9 +3,9 @@ package decorator.definition
 
 import cats.data.Writer
 import de.martenschaefer.data.serialization.{ Codec, ElementNode, ValidationError }
-import de.martenschaefer.minecraft.worldgenupdater.feature.ConfiguredFeature
-import de.martenschaefer.minecraft.worldgenupdater.valueprovider.ConstantIntProvider
 import decorator.Decorator
+import feature.{ ConfiguredFeature, FeatureProcessResult }
+import valueprovider.ConstantIntProvider
 
 case object CountDecorator extends Decorator(Codec[CountDecoratorConfig]) {
     override def process(config: CountDecoratorConfig, feature: ConfiguredFeature[_, _]): FeatureProcessResult =
