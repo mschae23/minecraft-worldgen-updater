@@ -6,7 +6,7 @@ import java.nio.file.{ Files, Path, Paths, StandardOpenOption }
 import java.util.Scanner
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.util.Using
-import de.martenschaefer.data.serialization.{ Codec, Decoder, Element, ElementError, JsonCodecs }
+import de.martenschaefer.data.serialization.{ Codec, Decoder, Element, ElementError, JsonCodecs, ValidationError}
 import de.martenschaefer.data.serialization.JsonCodecs.given
 import de.martenschaefer.data.util._
 import de.martenschaefer.data.util.DataResult._
@@ -106,7 +106,7 @@ object UpdaterMain {
         }
 
         val targetFeatureWriter: FeatureProcessResult = originFeature.feature.process(originFeature.config)
-        val warnings: List[ElementError] = targetFeatureWriter.written
+        var warnings: List[ElementError] = targetFeatureWriter.written
         val targetFeature: ConfiguredFeature[_, _] = targetFeatureWriter.value
 
         var foundWarnings = false
@@ -122,11 +122,11 @@ object UpdaterMain {
         }
 
         lifecycle match {
-            case Lifecycle.Experimental => println()
-                println("You're using experimental features.")
+            case Lifecycle.Experimental =>
+                warnings = ValidationError(_ => "Experimental features used.", null) :: warnings
                 foundWarnings = true
-            case Lifecycle.Deprecated(since) => println()
-                println(s"You're using features that are deprecated since version $since.")
+            case Lifecycle.Deprecated(since) =>
+                warnings = ValidationError(_ => s"Used features that are deprecated since $since.", null) :: warnings
                 foundWarnings = true
             case _ =>
         }
