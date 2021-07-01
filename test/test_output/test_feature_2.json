@@ -24,17 +24,9 @@
             },
             "decorator": {
               "config": {
-                "height": {
-                  "min_inclusive": {
-                    "above_bottom": 16
-                  },
-                  "max_inclusive": {
-                    "above_bottom": 95
-                  },
-                  "type": "minecraft:uniform"
-                }
+                "heightmap": "MOTION_BLOCKING"
               },
-              "type": "minecraft:range"
+              "type": "minecraft:heightmap"
             }
           },
           "type": "minecraft:decorated"

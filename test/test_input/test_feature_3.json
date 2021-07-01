@@ -10,7 +10,7 @@
           "Properties": {
           }
         },
-        "size": 79
+        "size": 51
       },
       "type": "minecraft:ore"
     },
@@ -29,6 +29,11 @@
         "config": {
         },
         "type": "minecraft:heightmap"
+      },
+      {
+        "config": {
+        },
+        "type": "minecraft:square"
       }
     ]
   },

@@ -3,7 +3,9 @@ package decorator
 
 import de.martenschaefer.data.serialization.Codec
 
-case class DefaultDecoratorConfig() extends DecoratorConfig
+case class DefaultDecoratorConfig() extends DecoratorConfig {
+    override def toString: String = "DefaultDecoratorConfig"
+}
 
 object DefaultDecoratorConfig {
     val INSTANCE = DefaultDecoratorConfig()

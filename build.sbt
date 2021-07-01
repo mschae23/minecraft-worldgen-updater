@@ -37,3 +37,10 @@ lazy val root = project
         publishMavenStyle := true,
         versionScheme := Some("semver-spec")
     )
+
+
+assembly / assemblyMergeStrategy := {
+    case PathList("module-info.class", xs @ _*) => MergeStrategy.discard
+    case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+    case x => MergeStrategy.first
+}

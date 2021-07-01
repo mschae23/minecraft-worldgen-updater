@@ -6,11 +6,12 @@ import java.nio.file.{ Files, Path, Paths, StandardOpenOption }
 import java.util.Scanner
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.util.Using
-import de.martenschaefer.data.serialization.{ Codec, Decoder, Element, ElementError, JsonCodecs, ValidationError}
+import de.martenschaefer.data.serialization.{ Codec, Decoder, Element, ElementError, JsonCodecs, ValidationError }
 import de.martenschaefer.data.serialization.JsonCodecs.given
 import de.martenschaefer.data.util._
 import de.martenschaefer.data.util.DataResult._
 import feature.{ ConfiguredFeature, Feature, FeatureConfig, FeatureProcessResult }
+import util._
 
 object UpdaterMain {
     val NAMESPACE = "worldgenupdater"
@@ -54,6 +55,9 @@ object UpdaterMain {
     def processFeatureFile(originFile: Path, targetFile: Path): FileProcessResult = {
         val result = this.processFile(originFile, targetFile)
 
+        println("Processing file")
+        println()
+
         result match {
             case FileProcessResult.Errors(errors) => println("Errors found:")
                 println(errors.mkString("- ", "\n- ", ""))
@@ -66,11 +70,16 @@ object UpdaterMain {
     }
 
     def processDirectory(originDirectory: Path, targetDirectory: Path): Unit = {
-        if (!Files.exists(originDirectory) || ! Files.isDirectory(originDirectory))
+        if (!Files.exists(originDirectory) || !Files.isDirectory(originDirectory))
             throw new IllegalArgumentException(s"${ originDirectory.getFileName } doesn't exist or is not a directory")
 
         if (Files.exists(targetDirectory) && !Files.isDirectory(targetDirectory))
             throw new IllegalArgumentException(s"${ targetDirectory.getFileName } is not a directory")
+
+        println("Processing directory")
+        println()
+
+        Files.createDirectories(targetDirectory)
 
         var foundWarnings = false
         var foundErrors = false
@@ -115,6 +124,7 @@ object UpdaterMain {
         val targetFeatureWriter: FeatureProcessResult = originFeature.feature.process(originFeature.config)
         var warnings: List[ElementError] = targetFeatureWriter.written
         val targetFeature: ConfiguredFeature[_, _] = targetFeatureWriter.value
+        warnings = warnings ::: targetFeature.feature.getPostProcessWarnings(targetFeature.config)
 
         var foundWarnings = false
 

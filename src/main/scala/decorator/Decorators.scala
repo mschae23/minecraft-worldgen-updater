@@ -7,8 +7,11 @@ import de.martenschaefer.data.util.Identifier
 import decorator.definition._
 
 object Decorators {
+    val SQUARE = register("square", new Decorator(Codec[DefaultDecoratorConfig]))
     val RANGE = register("range", RangeDecorator)
     val HEIGHTMAP = register("heightmap", HeightmapDecorator)
+    val TOP_SOLID_HEIGHTMAP = register("top_solid_heightmap", TopSolidHeightmapDecorator)
+    val HEIGHTMAP_WORLD_SURFACE = register("heightmap_world_surface", HeightmapWorldSurfaceDecorator)
     val COUNT = register("count", CountDecorator)
     val WATER_DEPTH_THRESHOLD = register("water_depth_threshold", WaterDepthThresholdDecorator)
 
