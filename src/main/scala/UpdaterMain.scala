@@ -53,16 +53,13 @@ object UpdaterMain {
     }
 
     def processFeatureFile(originFile: Path, targetFile: Path): FileProcessResult = {
+        Option(targetFile.getParent).foreach(Files.createDirectories(_))
+
         val result = this.processFile(originFile, targetFile)
 
-        println("Processing file")
-        println()
-
         result match {
-            case FileProcessResult.Errors(errors) => println("Errors found:")
-                println(errors.mkString("- ", "\n- ", ""))
-            case FileProcessResult.Warnings(warnings) => println("Warnings found:")
-                println(warnings.mkString("- ", "\n- ", ""))
+            case FileProcessResult.Errors(errors) => printWarnings("Errors", errors)
+            case FileProcessResult.Warnings(warnings) => printWarnings("Warnings", warnings)
             case _ =>
         }
 
@@ -76,9 +73,6 @@ object UpdaterMain {
         if (Files.exists(targetDirectory) && !Files.isDirectory(targetDirectory))
             throw new IllegalArgumentException(s"${ targetDirectory.getFileName } is not a directory")
 
-        println("Processing directory")
-        println()
-
         Files.createDirectories(targetDirectory)
 
         var foundWarnings = false
@@ -86,19 +80,17 @@ object UpdaterMain {
 
         Using(Files.newDirectoryStream(originDirectory)) { directoryStream =>
             for (path <- directoryStream.asScala if path.getFileName.toString.endsWith(JSON_SUFFIX)) {
-                println(s"Processing ${ path.getFileName } ...")
+                println(s"Processing ${ path.getFileName }")
 
                 val result = processFile(path, targetDirectory.resolve(path.getFileName))
 
                 result match {
                     case FileProcessResult.Errors(errors) => println()
-                        println("Errors found:")
-                        println(errors.mkString("- ", "\n- ", ""))
+                        printWarnings("Errors", errors)
                         println()
                         foundErrors = true
                     case FileProcessResult.Warnings(warnings) => println()
-                        println("Warnings found:")
-                        println(warnings.mkString("- ", "\n- ", ""))
+                        printWarnings("Warnings", warnings)
                         println()
                         foundWarnings = true
                     case _ =>
@@ -106,9 +98,9 @@ object UpdaterMain {
             }
         }
 
-        val notice = if (foundErrors) " with errors" else if (foundWarnings) " with warnings" else ""
+        val notice = if (foundErrors) "Done with errors." else if (foundWarnings) "Done with warnings." else "Done."
 
-        println(s"Done${ notice }.")
+        println(notice)
     }
 
     def processFile(originFile: Path, targetFile: Path): FileProcessResult = {
@@ -151,6 +143,11 @@ object UpdaterMain {
         write(targetFile, targetFeatureString)
 
         return if (foundWarnings) FileProcessResult.Warnings(warnings) else FileProcessResult.Normal
+    }
+
+    def printWarnings(label: String, warnings: List[ElementError]): Unit = {
+        println(s"$label found:")
+        println(warnings.mkString("- ", "\n- ", ""))
     }
 
     @throws[IOException]
