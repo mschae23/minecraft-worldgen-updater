@@ -1,12 +1,4 @@
-val scala3Version = "3.0.0"
-
-credentials +=
-    Credentials(
-        "GitHub Package Registry",
-        "maven.pkg.github.com",
-        sys.env("GITHUB_USERNAME"),
-        sys.env("GITHUB_TOKEN")
-    )
+val scala3Version = "3.0.1"
 
 lazy val root = project
     .in(file("."))
@@ -21,7 +13,7 @@ lazy val root = project
         idePackagePrefix := Some("de.martenschaefer.minecraft.worldgenupdater"),
 
         libraryDependencies ++= Seq(
-            "de.martenschaefer" %% "data-api" % "3.1.0",
+            "de.martenschaefer" %% "data-api" % "3.1.1",
 
             "org.typelevel" %% "cats-core" % "2.6.1"
             // "org.typelevel" %% "cats-effect" % "3.1.1"
@@ -38,6 +30,7 @@ lazy val root = project
         versionScheme := Some("semver-spec")
     )
 
+credentials += Credentials(Path.userHome / ".github" / ".credentials")
 
 assembly / assemblyMergeStrategy := {
     case PathList("module-info.class", xs @ _*) => MergeStrategy.discard

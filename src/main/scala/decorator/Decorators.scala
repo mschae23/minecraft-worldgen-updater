@@ -4,7 +4,7 @@ package decorator
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.data.util.Identifier
-import decorator.definition._
+import decorator.definition.*
 
 object Decorators {
     val SQUARE = register("square", new Decorator(Codec[DefaultDecoratorConfig]))

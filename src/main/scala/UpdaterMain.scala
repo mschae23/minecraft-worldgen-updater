@@ -39,7 +39,7 @@ object UpdaterMain {
 
     def main(args: Array[String]): Unit = {
         if (args.length < 2) {
-            println("At least two paramaters are required.")
+            Console.err.println("At least two paramaters are required.")
             return
         }
 
@@ -58,8 +58,8 @@ object UpdaterMain {
         val result = this.processFile(originFile, targetFile)
 
         result match {
-            case FileProcessResult.Errors(errors) => printWarnings("Errors", errors)
-            case FileProcessResult.Warnings(warnings) => printWarnings("Warnings", warnings)
+            case FileProcessResult.Errors(errors) => printWarnings(WarningType.Error, errors)
+            case FileProcessResult.Warnings(warnings) => printWarnings(WarningType.Warning, warnings)
             case _ =>
         }
 
@@ -80,17 +80,17 @@ object UpdaterMain {
 
         Using(Files.newDirectoryStream(originDirectory)) { directoryStream =>
             for (path <- directoryStream.asScala if path.getFileName.toString.endsWith(JSON_SUFFIX)) {
-                println(s"Processing ${ path.getFileName }")
+                println(s"[info] Processing ${ path.getFileName }")
 
                 val result = processFile(path, targetDirectory.resolve(path.getFileName))
 
                 result match {
                     case FileProcessResult.Errors(errors) => println()
-                        printWarnings("Errors", errors)
+                        printWarnings(WarningType.Error, errors)
                         println()
                         foundErrors = true
                     case FileProcessResult.Warnings(warnings) => println()
-                        printWarnings("Warnings", warnings)
+                        printWarnings(WarningType.Warning, warnings)
                         println()
                         foundWarnings = true
                     case _ =>
@@ -145,8 +145,8 @@ object UpdaterMain {
         return if (foundWarnings) FileProcessResult.Warnings(warnings) else FileProcessResult.Normal
     }
 
-    def printWarnings(label: String, warnings: List[ElementError]): Unit = {
-        println(s"$label found:")
+    def printWarnings(warningType: WarningType, warnings: List[ElementError]): Unit = {
+        println(s"${ warningType.label } found:")
         println(warnings.mkString("- ", "\n- ", ""))
     }
 
