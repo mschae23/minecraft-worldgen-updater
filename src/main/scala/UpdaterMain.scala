@@ -1,61 +1,81 @@
 package de.martenschaefer.minecraft.worldgenupdater
 
-import java.io.{ File, FileInputStream, InputStream, IOException, OutputStreamWriter, Writer }
+import java.io.{ File, FileInputStream, IOException, InputStream, OutputStreamWriter, Writer }
 import java.nio.charset.StandardCharsets
 import java.nio.file.{ Files, Path, Paths, StandardOpenOption }
 import java.util.Scanner
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.util.Using
+import de.martenschaefer.data.command.Command
+import de.martenschaefer.data.command.argument.CommandArgument
+import de.martenschaefer.data.command.builder.CommandBuilder.*
 import de.martenschaefer.data.serialization.{ Codec, Decoder, Element, ElementError, JsonCodecs, ValidationError }
 import de.martenschaefer.data.serialization.JsonCodecs.given
-import de.martenschaefer.data.util._
-import de.martenschaefer.data.util.DataResult._
+import de.martenschaefer.data.util.*
+import de.martenschaefer.data.util.DataResult.*
 import feature.{ ConfiguredFeature, Feature, FeatureConfig, FeatureProcessResult }
-import util._
+import util.*
 
 object UpdaterMain {
     val NAMESPACE = "worldgenupdater"
 
     private val JSON_SUFFIX = ".json"
 
-    enum FileProcessResult {
-        case Normal
-        case Warnings(val warnings: List[ElementError])
-        case Errors(val errors: List[ElementError])
-
-        def +(other: FileProcessResult): FileProcessResult = other match {
-            case Errors(errors) => this match {
-                case Errors(errors2) => Errors(errors2 ::: errors)
-                case _ => Errors(errors)
+    val COMMAND: Command[Unit] = Command.build {
+        literal("update") {
+            literal("features") {
+                argument(CommandArgument.string("origin")) { origin =>
+                    argument(CommandArgument.string("target")) { target =>
+                        result {
+                            this.processFeatures(origin, target)
+                        }
+                    }
+                }
             }
-            case _ if this.isInstanceOf[Errors] => this
-            case Warnings(warnings) => this match {
-                case Warnings(warnings2) => Warnings(warnings2 ::: warnings)
-                case _ => Warnings(warnings)
-            }
-            case _ => this
         }
     }
 
     def main(args: Array[String]): Unit = {
-        if (args.length < 2) {
-            Console.err.println("At least two paramaters are required.")
-            return
+        COMMAND.run(List.from(args)) match {
+            case None => {
+                println("Invalid command.\n")
+
+                println("Commands:")
+                println("update features <origin> <target>")
+            }
+
+            case _ =>
         }
-
-        val originFile = Paths.get(args(0))
-        val targetFile = Paths.get(args(1))
-
-        if (Files.isDirectory(originFile))
-            this.processDirectory(originFile, targetFile)
-        else if (Files.isRegularFile(originFile))
-            this.processFeatureFile(originFile, targetFile)
     }
 
-    def processFeatureFile(originFile: Path, targetFile: Path): FileProcessResult = {
+    def processFeatures(origin: String, target: String): Unit = {
+        val originPath = Paths.get(origin)
+        val targetPath = Paths.get(target)
+
+        val featureProcessor: ConfiguredFeature[_, _] => FeatureProcessResult = feature =>
+            feature.feature.process(feature.config)
+
+        val getFeaturePostProcessWarnings: ConfiguredFeature[_, _] => List[ElementError] = feature =>
+            feature.feature.getPostProcessWarnings(feature.config)
+
+        this.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings)
+    }
+
+    def process[T: Codec](originPath: Path, targetPath: Path,
+                          processor: T => ProcessResult[T],
+                          getPostProcessWarnings: T => List[ElementError]): Unit = {
+        if (Files.isDirectory(originPath))
+            this.processDirectory(originPath, targetPath, processor, getPostProcessWarnings)
+        else if (Files.isRegularFile(originPath))
+            this.processFeatureFile(originPath, targetPath, processor, getPostProcessWarnings)
+    }
+
+    def processFeatureFile[T: Codec](originFile: Path, targetFile: Path,
+                                     processor: T => ProcessResult[T],
+                                     getPostProcessWarnings: T => List[ElementError]): FileProcessResult = {
         Option(targetFile.getParent).foreach(Files.createDirectories(_))
 
-        val result = this.processFile(originFile, targetFile)
+        val result = this.processFile[T](originFile, targetFile, processor, getPostProcessWarnings)
 
         result match {
             case FileProcessResult.Errors(errors) => printWarnings(WarningType.Error, errors)
@@ -66,12 +86,14 @@ object UpdaterMain {
         result
     }
 
-    def processDirectory(originDirectory: Path, targetDirectory: Path): Unit = {
+    def processDirectory[T: Codec](originDirectory: Path, targetDirectory: Path,
+                                   processor: T => ProcessResult[T],
+                                   getPostProcessWarnings: T => List[ElementError]): Unit = {
         if (!Files.exists(originDirectory) || !Files.isDirectory(originDirectory))
-            throw new IllegalArgumentException(s"${ originDirectory.getFileName } doesn't exist or is not a directory")
+            throw new IllegalArgumentException(s"${originDirectory.getFileName} doesn't exist or is not a directory")
 
         if (Files.exists(targetDirectory) && !Files.isDirectory(targetDirectory))
-            throw new IllegalArgumentException(s"${ targetDirectory.getFileName } is not a directory")
+            throw new IllegalArgumentException(s"${targetDirectory.getFileName} is not a directory")
 
         Files.createDirectories(targetDirectory)
 
@@ -80,9 +102,9 @@ object UpdaterMain {
 
         Using(Files.newDirectoryStream(originDirectory)) { directoryStream =>
             for (path <- directoryStream.asScala if path.getFileName.toString.endsWith(JSON_SUFFIX)) {
-                println(s"[info] Processing ${ path.getFileName }")
+                println(s"[info] Processing ${path.getFileName}")
 
-                val result = processFile(path, targetDirectory.resolve(path.getFileName))
+                val result = processFile[T](path, targetDirectory.resolve(path.getFileName), processor, getPostProcessWarnings)
 
                 result match {
                     case FileProcessResult.Errors(errors) => println()
@@ -103,26 +125,28 @@ object UpdaterMain {
         println(notice)
     }
 
-    def processFile(originFile: Path, targetFile: Path): FileProcessResult = {
+    def processFile[T: Codec](originFile: Path, targetFile: Path,
+                              processor: T => ProcessResult[T],
+                              getPostProcessWarnings: T => List[ElementError]): FileProcessResult = {
         var lifecycle = Lifecycle.Stable
 
         val originString = read(originFile)
-        val originFeature: ConfiguredFeature[_, _] = Codec[ConfiguredFeature[_, _]].decode(originString) match {
+        val originFeature: T = Codec[T].decode(originString) match {
             case Success(feature, l) => lifecycle += l
                 feature
             case Failure(errors, _) => return FileProcessResult.Errors(errors.toList)
         }
 
-        val targetFeatureWriter: FeatureProcessResult = originFeature.feature.process(originFeature.config)
+        val targetFeatureWriter: ProcessResult[T] = processor(originFeature)
         var warnings: List[ElementError] = targetFeatureWriter.written
-        val targetFeature: ConfiguredFeature[_, _] = targetFeatureWriter.value
-        warnings = warnings ::: targetFeature.feature.getPostProcessWarnings(targetFeature.config)
+        val targetFeature: T = targetFeatureWriter.value
+        warnings = warnings ::: getPostProcessWarnings(targetFeature)
 
         var foundWarnings = false
 
         if (!warnings.isEmpty) foundWarnings = true
 
-        val targetFeatureString: String = Codec[ConfiguredFeature[_, _]].encode(targetFeature)(using JsonCodecs.prettyJsonEncoder) match {
+        val targetFeatureString: String = Codec[T].encode(targetFeature)(using JsonCodecs.prettyJsonEncoder) match {
             case Success(json, l) => lifecycle += l
                 json
             case Failure(errors, _) => {
@@ -146,7 +170,7 @@ object UpdaterMain {
     }
 
     def printWarnings(warningType: WarningType, warnings: List[ElementError]): Unit = {
-        println(s"${ warningType.label } found:")
+        println(s"${warningType.label} found:")
         println(warnings.mkString("- ", "\n- ", ""))
     }
 
