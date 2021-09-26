@@ -29,12 +29,14 @@ object UpdaterMain {
         }
 
         literal("update") {
-            withFlag("update-only", Some('u')) { onlyUpdate =>
-                literal("features") {
-                    argument(CommandArgument.string("origin")) { origin =>
-                        argument(CommandArgument.string("target")) { target =>
-                            result {
-                                this.processFeatures(origin, target, onlyUpdate)
+            withFlag("assume-yes", Some('y')) { assumeYes =>
+                withFlag("update-only", Some('u')) { onlyUpdate =>
+                    literal("features") {
+                        argument(CommandArgument.string("origin")) { origin =>
+                            argument(CommandArgument.string("target")) { target =>
+                                result {
+                                    this.processFeatures(origin, target, onlyUpdate, assumeYes)
+                                }
                             }
                         }
                     }
@@ -62,12 +64,13 @@ object UpdaterMain {
         println("Flags:")
         printFlag(Some('h'), "help", "Shows a list of commands and flags", 4)
         printFlag(Some('u'), "update-only", "Disables optimization of features", 2)
+        printFlag(Some('y'), "assume-yes", "Skip question if input files would be overwritten", 2)
     }
 
     private def printFlag(shortFlag: Option[Char], flag: String, description: String, tabs: Int): Unit =
         println(shortFlag.map("-" + _.toString).getOrElse("") + "\t\t--" + flag + "\t".repeat(tabs) + description)
 
-    def processFeatures(origin: String, target: String, onlyUpdate: Boolean): Unit = {
+    def processFeatures(origin: String, target: String, onlyUpdate: Boolean, assumeYes: Boolean): Unit = {
         val originPath = Paths.get(origin)
         val targetPath = Paths.get(target)
 
@@ -79,12 +82,30 @@ object UpdaterMain {
         val getFeaturePostProcessWarnings: ConfiguredFeature[_, _] => List[ElementError] = feature =>
             feature.feature.getPostProcessWarnings(feature.config, context)
 
-        this.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings)
+        this.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings, assumeYes)
     }
 
     def process[T: Codec](originPath: Path, targetPath: Path,
                           processor: T => ProcessResult[T],
-                          getPostProcessWarnings: T => List[ElementError]): Unit = {
+                          getPostProcessWarnings: T => List[ElementError], assumeYes: Boolean): Unit = {
+        if (originPath.equals(targetPath) && !assumeYes) {
+            println("Origin and target path are the same. The origin files will be overwritten.")
+            println("Continue (y / N)? ")
+
+            Using(new Scanner(System.in)) { scanner =>
+                val input = scanner.nextLine()
+
+                if (!"y".equalsIgnoreCase(input)) {
+                    if (!"n".equalsIgnoreCase(input) && !input.isEmpty) {
+                        println("Write either \"y\" for yes or \"n\" for no.")
+                    }
+
+                    println("Aborting.")
+                    return;
+                }
+            }
+        }
+
         if (Files.isDirectory(originPath))
             this.processDirectory(originPath, targetPath, processor, getPostProcessWarnings)
         else if (Files.isRegularFile(originPath))
