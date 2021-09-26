@@ -8,6 +8,6 @@ import feature.{ ConfiguredFeature, FeatureProcessResult }
 import valueprovider.ConstantIntProvider
 
 case object HeightmapDecorator extends Decorator(Codec[HeightmapDecoratorConfig]) {
-    override def process(config: HeightmapDecoratorConfig, feature: ConfiguredFeature[_, _]): FeatureProcessResult =
-        RangeDecorator.processHeightReplacingDecorator(feature, super.process(config, feature))
+    override def process(config: HeightmapDecoratorConfig, feature: ConfiguredFeature[_, _], context: FeatureUpdateContext): FeatureProcessResult =
+        RangeDecorator.processHeightReplacingDecorator(feature, super.process(config, feature, context), context)
 }

@@ -8,13 +8,13 @@ import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, Features }
 import util._
 
 case object DecoratedFeature extends Feature(Codec[DecoratedFeatureConfig]) {
-    override def process(config: DecoratedFeatureConfig): FeatureProcessResult =
-        config.feature.feature.process(config.feature.config).mapBoth((featureWarnings, feature) =>
-            config.decorator.decorator.process(config.decorator.config, feature)
+    override def process(config: DecoratedFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult =
+        config.feature.feature.process(config.feature.config, context).mapBoth((featureWarnings, feature) =>
+            config.decorator.decorator.process(config.decorator.config, feature, context)
                 .mapWritten(_.map(_.withPrependedPath("decorator")) ::: featureWarnings.map(
                     _.withPrependedPath("feature"))).run).mapWritten(_.map(_.withPrependedPath("config")))
 
-    override def getPostProcessWarnings(config: DecoratedFeatureConfig): List[ElementError] = {
+    override def getPostProcessWarnings(config: DecoratedFeatureConfig, context: FeatureUpdateContext): List[ElementError] = {
         @tailrec
         def loop(warnings: DecoratorWarnings, feature: ConfiguredFeature[_, _]): DecoratorWarnings = feature match {
             case ConfiguredFeature(Features.DECORATED, config: DecoratedFeatureConfig) =>

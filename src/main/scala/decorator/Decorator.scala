@@ -17,7 +17,7 @@ class Decorator[DC <: DecoratorConfig](configCodec: Codec[DC]) {
 
     def configure(config: DC): ConfiguredDecorator[DC, Decorator[DC]] = ConfiguredDecorator(this, config)
 
-    def process(config: DC, feature: ConfiguredFeature[_, _]): FeatureProcessResult =
+    def process(config: DC, feature: ConfiguredFeature[_, _], context: FeatureUpdateContext): FeatureProcessResult =
         Writer(List.empty, ConfiguredFeature(Features.DECORATED, DecoratedFeatureConfig(feature, ConfiguredDecorator(this, config))))
 
     override def toString: String = Registry[Decorator[_]].getId(this).map(_.toString).getOrElse(super.toString)

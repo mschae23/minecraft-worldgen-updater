@@ -6,4 +6,6 @@ import de.martenschaefer.data.util._
 import decorator.DecoratorConfig
 import valueprovider.{ ConstantIntProvider, IntProvider }
 
-case class CountDecoratorConfig(val count: IntProvider) extends DecoratorConfig derives Codec
+case class CountDecoratorConfig(val count: IntProvider) extends DecoratorConfig derives Codec {
+    def process: CountDecoratorConfig = CountDecoratorConfig(this.count.process)
+}

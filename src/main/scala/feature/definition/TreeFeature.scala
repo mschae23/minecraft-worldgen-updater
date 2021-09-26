@@ -8,7 +8,7 @@ import de.martenschaefer.minecraft.worldgenupdater.decorator.definition.{ Height
 import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, Features }
 
 case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
-    override def process(config: TreeFeatureConfig): FeatureProcessResult = {
+    override def process(config: TreeFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {
         if (config.heightmap.isInstanceOf[Some[_]]) {
             Features.DECORATED.process(DecoratedFeatureConfig(ConfiguredFeature(Features.TREE, TreeFeatureConfig(
                 config.trunkProvider,
@@ -23,7 +23,7 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                 config.forceDirt,
                 config.maxWaterDepth,
                 None
-            )), ConfiguredDecorator(Decorators.HEIGHTMAP, HeightmapDecoratorConfig(config.heightmap.get))))
+            )), ConfiguredDecorator(Decorators.HEIGHTMAP, HeightmapDecoratorConfig(config.heightmap.get))), context)
         } else if (config.maxWaterDepth != 0) {
             Features.DECORATED.process(DecoratedFeatureConfig(ConfiguredFeature(Features.TREE, TreeFeatureConfig(
                 config.trunkProvider,
@@ -38,7 +38,7 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                 config.forceDirt,
                 0,
                 config.heightmap
-            )), ConfiguredDecorator(Decorators.WATER_DEPTH_THRESHOLD, WaterDepthThresholdDecoratorConfig(config.maxWaterDepth))))
+            )), ConfiguredDecorator(Decorators.WATER_DEPTH_THRESHOLD, WaterDepthThresholdDecoratorConfig(config.maxWaterDepth))), context)
         } else Writer(List.empty, ConfiguredFeature(Features.TREE, config.process))
     }
 }

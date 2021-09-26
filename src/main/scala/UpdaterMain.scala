@@ -22,12 +22,20 @@ object UpdaterMain {
     private val JSON_SUFFIX = ".json"
 
     val COMMAND: Command[Unit] = Command.build {
+        literalFlag("help", Some('h')) {
+            result {
+                this.printHelp()
+            }
+        }
+
         literal("update") {
-            literal("features") {
-                argument(CommandArgument.string("origin")) { origin =>
-                    argument(CommandArgument.string("target")) { target =>
-                        result {
-                            this.processFeatures(origin, target)
+            withFlag("update-only", Some('u')) { onlyUpdate =>
+                literal("features") {
+                    argument(CommandArgument.string("origin")) { origin =>
+                        argument(CommandArgument.string("target")) { target =>
+                            result {
+                                this.processFeatures(origin, target, onlyUpdate)
+                            }
                         }
                     }
                 }
@@ -40,23 +48,36 @@ object UpdaterMain {
             case None => {
                 println("Invalid command.\n")
 
-                println("Commands:")
-                println("update features <origin> <target>")
+                this.printHelp()
             }
 
             case _ =>
         }
     }
 
-    def processFeatures(origin: String, target: String): Unit = {
+    def printHelp(): Unit = {
+        println("Commands:")
+        println("update features <origin> <target>")
+        println()
+        println("Flags:")
+        printFlag(Some('h'), "help", "Shows a list of commands and flags", 4)
+        printFlag(Some('u'), "update-only", "Disables optimization of features", 2)
+    }
+
+    private def printFlag(shortFlag: Option[Char], flag: String, description: String, tabs: Int): Unit =
+        println(shortFlag.map("-" + _.toString).getOrElse("") + "\t\t--" + flag + "\t".repeat(tabs) + description)
+
+    def processFeatures(origin: String, target: String, onlyUpdate: Boolean): Unit = {
         val originPath = Paths.get(origin)
         val targetPath = Paths.get(target)
 
+        val context = FeatureUpdateContext(onlyUpdate)
+
         val featureProcessor: ConfiguredFeature[_, _] => FeatureProcessResult = feature =>
-            feature.feature.process(feature.config)
+            feature.feature.process(feature.config, context)
 
         val getFeaturePostProcessWarnings: ConfiguredFeature[_, _] => List[ElementError] = feature =>
-            feature.feature.getPostProcessWarnings(feature.config)
+            feature.feature.getPostProcessWarnings(feature.config, context)
 
         this.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings)
     }
@@ -187,7 +208,8 @@ object UpdaterMain {
     @throws[IOException]
     def write(file: Path, content: String): Unit = {
         Using.Manager { use =>
-            val out: Writer = use(OutputStreamWriter(Files.newOutputStream(file, StandardOpenOption.CREATE)))
+            val out: Writer = use(OutputStreamWriter(Files.newOutputStream(file,
+                StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)))
 
             out.write(content)
         }

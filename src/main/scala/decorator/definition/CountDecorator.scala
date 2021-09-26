@@ -8,12 +8,12 @@ import feature.{ ConfiguredFeature, FeatureProcessResult }
 import valueprovider.ConstantIntProvider
 
 case object CountDecorator extends Decorator(Codec[CountDecoratorConfig]) {
-    override def process(config: CountDecoratorConfig, feature: ConfiguredFeature[_, _]): FeatureProcessResult =
+    override def process(config: CountDecoratorConfig, feature: ConfiguredFeature[_, _], context: FeatureUpdateContext): FeatureProcessResult =
         config.count.process match {
-            case ConstantIntProvider(value) if value == 1 => Writer(List.empty, feature)
-            case ConstantIntProvider(value) if value == 0 => super.process(config, feature).mapBoth((warnings, feature) =>
+            case ConstantIntProvider(value) if !context.onlyUpdate && value == 1 => Writer(List.empty, feature)
+            case ConstantIntProvider(value) if value == 0 => super.process(config, feature, context).mapBoth((warnings, feature) =>
                 (ValidationError(path => s"$path: Count is zero; the decorated feature will never generate", List.empty) :: warnings, feature))
 
-            case _ => super.process(config, feature)
+            case _ => super.process(if (context.onlyUpdate) config else config.process, feature, context)
         }
 }

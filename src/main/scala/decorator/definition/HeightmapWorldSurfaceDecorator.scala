@@ -9,7 +9,7 @@ import feature.definition.DecoratedFeatureConfig
 import util.HeightmapType
 
 case object HeightmapWorldSurfaceDecorator extends Decorator(Codec[DefaultDecoratorConfig]) {
-    override def process(config: DefaultDecoratorConfig, feature: ConfiguredFeature[_, _]): FeatureProcessResult =
+    override def process(config: DefaultDecoratorConfig, feature: ConfiguredFeature[_, _], context: FeatureUpdateContext): FeatureProcessResult =
         Features.DECORATED.process(DecoratedFeatureConfig(feature, ConfiguredDecorator(Decorators.HEIGHTMAP,
-            HeightmapDecoratorConfig(HeightmapType.WorldSurfaceWg))))
+            HeightmapDecoratorConfig(HeightmapType.WorldSurfaceWg))), context)
 }

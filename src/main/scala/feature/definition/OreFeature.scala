@@ -5,8 +5,8 @@ import de.martenschaefer.data.serialization.{ Codec, ElementNode, ValidationErro
 import feature.{ Feature, FeatureProcessResult }
 
 case object OreFeature extends Feature(Codec[OreFeatureConfig]) {
-    override def process(config: OreFeatureConfig): FeatureProcessResult = {
-        var processed = super.process(config)
+    override def process(config: OreFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {
+        var processed = super.process(config, context)
 
         if (config.size < 0 || config.size > 64)
             processed = processed.mapWritten(warnings => ValidationError(
