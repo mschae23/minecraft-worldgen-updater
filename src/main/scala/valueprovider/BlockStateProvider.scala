@@ -5,8 +5,8 @@ import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
 import de.martenschaefer.data.serialization.Codec
-import de.martenschaefer.data.util._
-import util._
+import de.martenschaefer.data.util.*
+import util.*
 
 trait BlockStateProvider {
     val providerType: BlockStateProviderType[_]
@@ -29,8 +29,9 @@ object BlockStateProviderType {
 object BlockStateProviderTypes {
     val SIMPLE_STATE_PROVIDER = register("simple_state_provider", Codec[SimpleBlockStateProvider])
     val WEIGHTED_STATE_PROVIDER = register("weighted_state_provider", Codec[WeightedBlockStateProvider])
-    val PLAINS_FLOWER_PROVIDER = register("plains_flower_provider", Codec[PlainsFlowerProvider])
-    val FOREST_FLOWER_PROVIDER = register("forest_flower_provider", Codec[ForestFlowerProvider])
+    val NOISE_THRESHOLD_PROVIDER = register("noise_threshold_provider", Codec[NoiseThresholdBlockStateProvider])
+    val NOISE_PROVIDER = register("noise_provider", Codec[NoiseBlockStateProvider])
+    val DUAL_NOISE_PROVIDER = register("dual_noise_provider", Codec[DualNoiseBlockStateProvider])
     val ROTATED_BLOCK_PROVIDER = register("rotated_block_provider", Codec[RotatedBlockProvider])
     val RANDOMIZED_INT_STATE_PROVIDER = register("randomized_int_state_provider", Codec[RandomizedIntStateProvider])
 
@@ -50,28 +51,32 @@ case class WeightedBlockStateProvider(val entries: DataPool[BlockState]) extends
     override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.WEIGHTED_STATE_PROVIDER
 }
 
-case class PlainsFlowerProvider() extends BlockStateProvider {
-    override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.PLAINS_FLOWER_PROVIDER
+case class NoiseThresholdBlockStateProvider(seed: Long, noise: NoiseParameters, scale: Float,
+                                            threshold: Float, highChance: Float, defaultState: BlockState,
+                                            lowStates: List[BlockState],
+                                            highStates: List[BlockState]) extends BlockStateProvider derives Codec {
+    override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.NOISE_THRESHOLD_PROVIDER
+
+    override val process: BlockStateProvider = if ((lowStates.isEmpty || lowStates.iterator.forall(_ == defaultState))
+        && ((highStates.isEmpty || highStates.iterator.forall(_ == defaultState)))) SimpleBlockStateProvider(defaultState)
+    else this
 }
 
-object PlainsFlowerProvider {
-    lazy val INSTANCE = new PlainsFlowerProvider()
+case class NoiseBlockStateProvider(seed: Long, noise: NoiseParameters, scale: Float,
+                                   states: List[BlockState]) extends BlockStateProvider derives Codec {
+    override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.NOISE_PROVIDER
 
-    def apply: PlainsFlowerProvider = INSTANCE
-
-    given Codec[PlainsFlowerProvider] = Codec.unit(() => INSTANCE)
+    override val process: BlockStateProvider = if (this.states.length == 1)
+        SimpleBlockStateProvider(this.states(0)) else this
 }
 
-case class ForestFlowerProvider() extends BlockStateProvider {
-    override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.FOREST_FLOWER_PROVIDER
-}
+case class DualNoiseBlockStateProvider(variety: Range[Int], slowNoise: NoiseParameters, slowScale: Float,
+                                       seed: Long, noise: NoiseParameters, scale: Float,
+                                       states: List[BlockState]) extends BlockStateProvider derives Codec {
+    override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.DUAL_NOISE_PROVIDER
 
-object ForestFlowerProvider {
-    lazy val INSTANCE = new ForestFlowerProvider()
-
-    def apply: ForestFlowerProvider = INSTANCE
-
-    given Codec[ForestFlowerProvider] = Codec.unit(() => INSTANCE)
+    override val process: BlockStateProvider = if (this.states.length == 1)
+        SimpleBlockStateProvider(this.states(0)) else this
 }
 
 case class RotatedBlockProvider(val state: BlockState) extends BlockStateProvider derives Codec {

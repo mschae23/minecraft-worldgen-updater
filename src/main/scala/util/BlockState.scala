@@ -20,7 +20,7 @@ object BlockState {
 
         def decodeElement(element: Element): Result[BlockState] = element match {
             case Element.ObjectElement(map) => for {
-                decodedName <- Codec[Identifier].decodeElement(map.getOrElse("Name",
+                decodedName <- Identifier.createCodec("minecraft").decodeElement(map.getOrElse("Name",
                     return Failure(Vector(RecordParseError.MissingKey(element, List(ElementNode.Name("Name")))))))
                 result <- Success(BlockState(decodedName, map.getOrElse("Properties",
                     return Failure(Vector(RecordParseError.MissingKey(element, List(ElementNode.Name("Properties")))))) match {

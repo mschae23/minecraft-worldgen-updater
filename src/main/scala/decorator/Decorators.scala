@@ -13,7 +13,10 @@ object Decorators {
     val TOP_SOLID_HEIGHTMAP = register("top_solid_heightmap", TopSolidHeightmapDecorator)
     val HEIGHTMAP_WORLD_SURFACE = register("heightmap_world_surface", HeightmapWorldSurfaceDecorator)
     val COUNT = register("count", CountDecorator)
+    val SURFACE_RELATIVE_THRESHOLD = register("surface_relative_threshold", new Decorator(Codec[SurfaceRelativeThresholdDecoratorConfig]))
     val WATER_DEPTH_THRESHOLD = register("water_depth_threshold", WaterDepthThresholdDecorator)
+    val BLOCK_SURVIVES_FILTER = register("block_survives_filter", new Decorator(Codec[BlockSurvivesFilterDecoratorConfig]))
+    val BLOCK_FILTER = register("block_filter", new Decorator(Codec[BlockFilterDecoratorConfig]))
 
     private def register[DC <: DecoratorConfig](name: String, decorator: Decorator[DC]): Decorator[DC] = {
         decorator.register(Identifier("minecraft", name))

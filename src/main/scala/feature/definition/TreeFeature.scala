@@ -1,20 +1,22 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package feature.definition
 
-import cats.data.Writer
-import de.martenschaefer.data.serialization.{ Codec, ElementNode, ValidationError }
-import de.martenschaefer.minecraft.worldgenupdater.decorator.{ ConfiguredDecorator, Decorators }
-import de.martenschaefer.minecraft.worldgenupdater.decorator.definition.{ HeightmapDecoratorConfig, WaterDepthThresholdDecoratorConfig }
+import de.martenschaefer.data.serialization.{ Codec, ElementError, ElementNode, ValidationError }
+import decorator.definition.{ BlockSurvivesFilterDecoratorConfig, HeightmapDecoratorConfig, WaterDepthThresholdDecoratorConfig }
+import decorator.{ ConfiguredDecorator, Decorators }
 import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, Features }
+import valueprovider.SimpleBlockStateProvider
+import cats.data.Writer
 
 case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
-    override def process(config: TreeFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {
-        if (config.heightmap.isInstanceOf[Some[_]]) {
+    override def process(unprocessedConfig: TreeFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {
+        val config = unprocessedConfig.process
+
+        if (config.heightmap.isDefined) {
             Features.DECORATED.process(DecoratedFeatureConfig(ConfiguredFeature(Features.TREE, TreeFeatureConfig(
                 config.trunkProvider,
                 config.trunkPlacer,
                 config.foliageProvider,
-                config.saplingProvider,
                 config.foliagePlacer,
                 config.dirtProvider,
                 config.minimumSize,
@@ -22,14 +24,14 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                 config.ignoreVines,
                 config.forceDirt,
                 config.maxWaterDepth,
-                None
+                None,
+                config.saplingProvider
             )), ConfiguredDecorator(Decorators.HEIGHTMAP, HeightmapDecoratorConfig(config.heightmap.get))), context)
         } else if (config.maxWaterDepth != 0) {
             Features.DECORATED.process(DecoratedFeatureConfig(ConfiguredFeature(Features.TREE, TreeFeatureConfig(
                 config.trunkProvider,
                 config.trunkPlacer,
                 config.foliageProvider,
-                config.saplingProvider,
                 config.foliagePlacer,
                 config.dirtProvider,
                 config.minimumSize,
@@ -37,8 +39,45 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                 config.ignoreVines,
                 config.forceDirt,
                 0,
-                config.heightmap
+                config.heightmap,
+                config.saplingProvider
             )), ConfiguredDecorator(Decorators.WATER_DEPTH_THRESHOLD, WaterDepthThresholdDecoratorConfig(config.maxWaterDepth))), context)
-        } else Writer(List.empty, ConfiguredFeature(Features.TREE, config.process))
+        } else if (config.saplingProvider.isDefined && config.saplingProvider.get.isInstanceOf[SimpleBlockStateProvider]) {
+            Features.DECORATED.process(DecoratedFeatureConfig(ConfiguredFeature(Features.TREE, TreeFeatureConfig(
+                config.trunkProvider,
+                config.trunkPlacer,
+                config.foliageProvider,
+                config.foliagePlacer,
+                config.dirtProvider,
+                config.minimumSize,
+                config.decorators,
+                config.ignoreVines,
+                config.forceDirt,
+                config.maxWaterDepth,
+                config.heightmap,
+                None
+            )), ConfiguredDecorator(Decorators.BLOCK_SURVIVES_FILTER, BlockSurvivesFilterDecoratorConfig(
+                config.saplingProvider.get.process.asInstanceOf[SimpleBlockStateProvider].state))), context)
+        } else if (config.saplingProvider.isDefined) {
+            Writer(getSaplingProviderErrorList,
+                ConfiguredFeature(Features.TREE, TreeFeatureConfig(
+                    config.trunkProvider,
+                    config.trunkPlacer,
+                    config.foliageProvider,
+                    config.foliagePlacer,
+                    config.dirtProvider,
+                    config.minimumSize,
+                    config.decorators,
+                    config.ignoreVines,
+                    config.forceDirt,
+                    config.maxWaterDepth,
+                    config.heightmap,
+                    None
+                )))
+        } else
+            Writer(List.empty, ConfiguredFeature(Features.TREE, config.process))
     }
+
+    def getSaplingProviderErrorList: List[ElementError] =
+        List(ValidationError(path => s"$path: Could not add block_survives_filter decorator to tree", List.empty))
 }

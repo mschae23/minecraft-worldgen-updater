@@ -3,37 +3,37 @@
     "feature": {
       "config": {
         "target": {
-          "predicate_type": "minecraft:always_true"
+          "predicate_type": "always_true"
         },
         "state": {
-          "Name": "minecraft:iron_ore",
+          "Name": "iron_ore",
           "Properties": {
           }
         },
         "size": 51
       },
-      "type": "minecraft:ore"
+      "type": "ore"
     },
     "decorators": [
       {
         "config": {
           "count": 5
         },
-        "type": "minecraft:count"
+        "type": "count"
       },
       {
         "config": {},
-        "type": "minecraft:square"
+        "type": "square"
       },
       {
         "config": {
         },
-        "type": "minecraft:heightmap"
+        "type": "heightmap"
       },
       {
         "config": {
         },
-        "type": "minecraft:square"
+        "type": "square"
       }
     ]
   },
