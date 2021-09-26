@@ -1,0 +1,12 @@
+{
+  "config": {
+    "feature": "worldgenupdater:ore_feature_2",
+    "decorator": {
+      "config": {
+        "count": 5
+      },
+      "type": "count"
+    }
+  },
+  "type": "decorated"
+}

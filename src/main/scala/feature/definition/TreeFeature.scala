@@ -79,5 +79,6 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
     }
 
     def getSaplingProviderErrorList: List[ElementError] =
-        List(ValidationError(path => s"$path: Could not add block_survives_filter decorator to tree", List.empty))
+        List(ValidationError(path => s"$path: Could not add block_survives_filter decorator to tree",
+            List(ElementNode.Name("config"), ElementNode.Name("sapling_provider"))))
 }
