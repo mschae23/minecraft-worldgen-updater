@@ -5,7 +5,7 @@ lazy val root = project
     .settings(
         name := "minecraft-worldgen-updater",
         organization := "de.martenschaefer",
-        version := "1.0.0",
+        version := "1.1.0",
         homepage := Some(url("https://github.com/mschae23/minecraft-worldgen-updater")),
 
         scalaVersion := scala3Version,
@@ -13,7 +13,7 @@ lazy val root = project
         idePackagePrefix := Some("de.martenschaefer.minecraft.worldgenupdater"),
 
         libraryDependencies ++= Seq(
-            "de.martenschaefer" %% "data-api" % "3.4.1",
+            "de.martenschaefer" %% "data-api" % "3.5.0",
 
             "org.typelevel" %% "cats-core" % "2.6.1"
             // "org.typelevel" %% "cats-effect" % "3.1.1"

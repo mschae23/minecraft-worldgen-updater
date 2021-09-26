@@ -1,9 +1,35 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package util
 
+import java.io.{ IOException, InputStream, OutputStreamWriter, Writer }
+import java.nio.charset.StandardCharsets
+import java.nio.file.{ Files, Path, StandardOpenOption }
+import java.util.Scanner
+import scala.util.Using
+
 extension [T](self: T) {
     def printlnDebug: T = {
         println(self)
         self
+    }
+}
+
+@throws[IOException]
+def read(file: Path): String = {
+    Using.Manager { use =>
+        val in: InputStream = use(Files.newInputStream(file))
+        val scanner: Scanner = use(new Scanner(in, StandardCharsets.UTF_8.name))
+
+        scanner.useDelimiter("\\A").next()
+    }.get
+}
+
+@throws[IOException]
+def write(file: Path, content: String): Unit = {
+    Using.Manager { use =>
+        val out: Writer = use(OutputStreamWriter(Files.newOutputStream(file,
+            StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)))
+
+        out.write(content)
     }
 }
