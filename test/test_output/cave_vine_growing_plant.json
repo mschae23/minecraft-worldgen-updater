@@ -1,0 +1,101 @@
+{
+  "config": {
+    "layers": [
+      {
+        "height": {
+          "distribution": [
+            {
+              "data": {
+                "min_inclusive": 0,
+                "max_inclusive": 19,
+                "type": "minecraft:uniform"
+              },
+              "weight": 2
+            },
+            {
+              "data": {
+                "min_inclusive": 0,
+                "max_inclusive": 2,
+                "type": "minecraft:uniform"
+              },
+              "weight": 3
+            },
+            {
+              "data": {
+                "min_inclusive": 0,
+                "max_inclusive": 6,
+                "type": "minecraft:uniform"
+              },
+              "weight": 10
+            }
+          ],
+          "type": "minecraft:weighted_list"
+        },
+        "provider": {
+          "entries": [
+            {
+              "data": {
+                "Name": "minecraft:cave_vines_plant",
+                "Properties": {
+                  "berries": "false"
+                }
+              },
+              "weight": 4
+            },
+            {
+              "data": {
+                "Name": "minecraft:cave_vines_plant",
+                "Properties": {
+                  "berries": "true"
+                }
+              },
+              "weight": 1
+            }
+          ],
+          "type": "minecraft:weighted_state_provider"
+        }
+      },
+      {
+        "height": 1,
+        "provider": {
+          "source": {
+            "entries": [
+              {
+                "data": {
+                  "Name": "minecraft:cave_vines",
+                  "Properties": {
+                    "berries": "false",
+                    "age": "0"
+                  }
+                },
+                "weight": 4
+              },
+              {
+                "data": {
+                  "Name": "minecraft:cave_vines",
+                  "Properties": {
+                    "berries": "true",
+                    "age": "0"
+                  }
+                },
+                "weight": 1
+              }
+            ],
+            "type": "minecraft:weighted_state_provider"
+          },
+          "property": "age",
+          "values": {
+            "min_inclusive": 17,
+            "max_inclusive": 25,
+            "type": "minecraft:uniform"
+          },
+          "type": "minecraft:randomized_int_state_provider"
+        }
+      }
+    ],
+    "direction": "down",
+    "allow_water": false,
+    "prioritize_tip": true
+  },
+  "type": "minecraft:block_column"
+}

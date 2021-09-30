@@ -5,12 +5,23 @@ import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
 import de.martenschaefer.data.serialization.Codec
-import de.martenschaefer.data.util._
+import de.martenschaefer.data.util.*
+import util.{ DataPool, Weighted }
 
 trait IntProvider {
     val providerType: IntProviderType[_]
 
-    val process: IntProvider = this
+    def process: IntProvider = this
+
+    def map(mapMin: Int => Int, mapMax: Int => Int): IntProvider = this match {
+        case ConstantIntProvider(value) => ConstantIntProvider(mapMin(value))
+        case UniformIntProvider(min, max) => UniformIntProvider(mapMin(min), mapMax(max))
+        case BiasedToBottomIntProvider(min, max) => BiasedToBottomIntProvider(mapMin(min), mapMax(max))
+        case ClampedIntProvider(source, min, max) => ClampedIntProvider(source.map(mapMin, mapMax),
+            mapMin(min), mapMax(max))
+        case WeightedListIntProvider(distribution) => WeightedListIntProvider(DataPool(distribution.entries.map(
+            weighted => Weighted.Present(weighted.data.map(mapMin, mapMax), weighted.weight))))
+    }
 }
 
 object IntProvider {
@@ -40,6 +51,7 @@ object IntProviderTypes {
     val UNIFORM = register("uniform", Codec[UniformIntProvider])
     val BIASED_TO_BOTTOM = register("biased_to_bottom", Codec[BiasedToBottomIntProvider])
     val CLAMPED = register("clamped", Codec[ClampedIntProvider])
+    val WEIGHTED_LIST = register("weighted_list", Codec[WeightedListIntProvider])
 
     private def register[P <: IntProvider](name: String, codec: Codec[P]): IntProviderType[P] = {
         val providerType = IntProviderType(codec)
@@ -56,7 +68,7 @@ case class ConstantIntProvider(val value: Int) extends IntProvider derives Codec
 case class UniformIntProvider(val minInclusive: Int, val maxInclusive: Int) extends IntProvider derives Codec {
     override val providerType: IntProviderType[_] = IntProviderTypes.UNIFORM
 
-    override val process: IntProvider =
+    override def process: IntProvider =
         if (this.minInclusive == this.maxInclusive) ConstantIntProvider(this.minInclusive)
         else this
 }
@@ -64,7 +76,7 @@ case class UniformIntProvider(val minInclusive: Int, val maxInclusive: Int) exte
 case class BiasedToBottomIntProvider(val minInclusive: Int, val maxInclusive: Int) extends IntProvider derives Codec {
     override val providerType: IntProviderType[_] = IntProviderTypes.BIASED_TO_BOTTOM
 
-    override val process: IntProvider =
+    override def process: IntProvider =
         if (this.minInclusive == this.maxInclusive) ConstantIntProvider(this.minInclusive)
         else this
 }
@@ -72,7 +84,7 @@ case class BiasedToBottomIntProvider(val minInclusive: Int, val maxInclusive: In
 case class ClampedIntProvider(val source: IntProvider, val minInclusive: Int, val maxInclusive: Int) extends IntProvider derives Codec {
     override val providerType: IntProviderType[_] = IntProviderTypes.CLAMPED
 
-    override val process: IntProvider = source match {
+    override def process: IntProvider = source match {
         case ConstantIntProvider(value) if value >= this.minInclusive && value <= this.maxInclusive =>
             ConstantIntProvider(value).process
         case UniformIntProvider(minInclusive, maxInclusive) if minInclusive >= this.minInclusive && maxInclusive <= this.maxInclusive =>
@@ -86,5 +98,17 @@ case class ClampedIntProvider(val source: IntProvider, val minInclusive: Int, va
         case _ if this.minInclusive == this.maxInclusive => this.source.process
 
         case _ => ClampedIntProvider(this.source.process, this.minInclusive, this.maxInclusive)
+    }
+}
+
+case class WeightedListIntProvider(val distribution: DataPool[IntProvider]) extends IntProvider derives Codec {
+    override val providerType: IntProviderType[_] = IntProviderTypes.WEIGHTED_LIST
+
+    override def process: IntProvider = this.distribution.entries match {
+        case head :: Nil => head.data.process
+        case Nil => this
+
+        case _ => WeightedListIntProvider(DataPool(this.distribution.entries.map(weighted =>
+            Weighted.Present(weighted.data.process, weighted.weight))))
     }
 }

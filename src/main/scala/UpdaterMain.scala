@@ -37,7 +37,9 @@ object UpdaterMain {
     }
 
     def main(args: Array[String]): Unit = {
-        COMMAND.run(List.from(args)) match {
+        val arguments = List.from(args)
+
+        COMMAND.run(arguments) match {
             case Failure(_, _) => {
                 println("Invalid command.\n")
 
