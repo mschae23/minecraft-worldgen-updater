@@ -2,7 +2,8 @@ package de.martenschaefer.minecraft.worldgenupdater
 package decorator
 
 import de.martenschaefer.data.registry.Registry
-import de.martenschaefer.data.serialization.{ Codec, Element, Result }
+import de.martenschaefer.data.Result
+import de.martenschaefer.data.serialization.{ Codec, Element }
 import de.martenschaefer.data.util.DataResult._
 
 class DefaultDecoratorCodec(codec: Codec[ConfiguredDecorator[_, _]]) extends Codec[ConfiguredDecorator[_, _]] {

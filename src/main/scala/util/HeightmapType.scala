@@ -25,7 +25,7 @@ object HeightmapType {
         case "OCEAN_FLOOR" => Success(OceanFloor)
         case "MOTION_BLOCKING" => Success(MotionBlocking)
         case "MOTION_BLOCKING_NO_LEAVES" => Success(MotionBlockingNoLeaves)
-        case _ => Failure(Vector(RecordParseError.ValidationParseError(path => s"$path is not a valid heightmap", element, List())))
+        case _ => Failure(List(RecordParseError.ValidationParseError(path => s"$path is not a valid heightmap", element, List())))
     })(_ match {
         case WorldSurfaceWg => Success(WorldSurfaceWg.name)
         case WorldSurface => Success(WorldSurface.name)

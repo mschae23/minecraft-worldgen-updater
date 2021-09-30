@@ -2,7 +2,8 @@ package de.martenschaefer.minecraft.worldgenupdater
 package util
 
 import scala.collection.immutable.ListMap
-import de.martenschaefer.data.serialization.{ Codec, Element, ElementNode, RecordParseError, Result }
+import de.martenschaefer.data.Result
+import de.martenschaefer.data.serialization.{ Codec, Element, ElementNode, RecordParseError }
 import de.martenschaefer.data.util._
 import de.martenschaefer.data.util.DataResult._
 
@@ -21,15 +22,15 @@ object BlockState {
         def decodeElement(element: Element): Result[BlockState] = element match {
             case Element.ObjectElement(map) => for {
                 decodedName <- Identifier.createCodec("minecraft").decodeElement(map.getOrElse("Name",
-                    return Failure(Vector(RecordParseError.MissingKey(element, List(ElementNode.Name("Name")))))))
+                    return Failure(List(RecordParseError.MissingKey(element, List(ElementNode.Name("Name")))))))
                 result <- Success(BlockState(decodedName, map.getOrElse("Properties",
-                    return Failure(Vector(RecordParseError.MissingKey(element, List(ElementNode.Name("Properties")))))) match {
+                    return Failure(List(RecordParseError.MissingKey(element, List(ElementNode.Name("Properties")))))) match {
                     case Element.ObjectElement(properties) => properties
-                    case e => return Failure(Vector(RecordParseError.NotAnObject(e, List(ElementNode.Name("Properties")))))
+                    case e => return Failure(List(RecordParseError.NotAnObject(e, List(ElementNode.Name("Properties")))))
                 }))
             } yield result
 
-            case _ => Failure(Vector(RecordParseError.NotAnObject(element, List())))
+            case _ => Failure(List(RecordParseError.NotAnObject(element, List())))
         }
 
         val lifecycle: Lifecycle = Lifecycle.Stable

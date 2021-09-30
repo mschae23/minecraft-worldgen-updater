@@ -5,6 +5,7 @@ import de.martenschaefer.data.command.Command
 import de.martenschaefer.data.command.argument.CommandArgument
 import de.martenschaefer.data.command.builder.CommandBuilder.*
 import de.martenschaefer.data.serialization.ElementError
+import de.martenschaefer.data.util.DataResult.*
 import feature.{ ConfiguredFeature, FeatureProcessResult }
 import util.*
 
@@ -37,7 +38,7 @@ object UpdaterMain {
 
     def main(args: Array[String]): Unit = {
         COMMAND.run(List.from(args)) match {
-            case None => {
+            case Failure(_, _) => {
                 println("Invalid command.\n")
 
                 this.printHelp()
