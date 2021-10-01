@@ -5,7 +5,7 @@ lazy val root = project
     .settings(
         name := "minecraft-worldgen-updater",
         organization := "de.martenschaefer",
-        version := "1.2.0",
+        version := "1.3.0",
         homepage := Some(url("https://github.com/mschae23/minecraft-worldgen-updater")),
 
         scalaVersion := scala3Version,
