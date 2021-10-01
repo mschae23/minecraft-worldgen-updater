@@ -1,11 +1,12 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package decorator.definition
 
-import cats.data.Writer
 import de.martenschaefer.data.serialization.{ Codec, ElementNode, ValidationError }
-import decorator.Decorator
-import feature.{ ConfiguredFeature, FeatureProcessResult }
+import decorator.{ ConfiguredDecorator, Decorator, Decorators }
+import feature.definition.DecoratedFeatureConfig
+import feature.{ ConfiguredFeature, FeatureProcessResult, Features }
 import valueprovider.ConstantIntProvider
+import cats.data.Writer
 
 case object CountDecorator extends Decorator(Codec[CountDecoratorConfig]) {
     override def process(config: CountDecoratorConfig, feature: ConfiguredFeature[_, _], context: FeatureUpdateContext): FeatureProcessResult =

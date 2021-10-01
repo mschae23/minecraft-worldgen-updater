@@ -20,14 +20,15 @@ object UpdaterMain {
         }
 
         literal("update") {
-            withFlag("assume-yes", Some('y')) { assumeYes =>
-                withFlag("update-only", Some('u')) { onlyUpdate =>
-                    literal("features") {
-                        argument(CommandArgument.string("origin")) { origin =>
-                            argument(CommandArgument.string("target")) { target =>
-                                result {
-                                    this.processFeatures(origin, target, onlyUpdate, assumeYes)
-                                }
+            withFlags(Map(
+                Flag.AssumeYes -> ("assume-yes", Some('y')),
+                Flag.UpdateOnly -> ("update-only", Some('u')),
+                Flag.Colored -> ("colored", None))) { flags =>
+                literal("features") {
+                    argument(CommandArgument.string("origin")) { origin =>
+                        argument(CommandArgument.string("target")) { target =>
+                            result {
+                                this.processFeatures(origin, target)(using flags)
                             }
                         }
                     }
@@ -50,11 +51,11 @@ object UpdaterMain {
         }
     }
 
-    def processFeatures(origin: String, target: String, onlyUpdate: Boolean, assumeYes: Boolean): Unit = {
+    def processFeatures(origin: String, target: String)(using flags: Flags): Unit = {
         val originPath = Paths.get(origin)
         val targetPath = Paths.get(target)
 
-        val context = FeatureUpdateContext(onlyUpdate)
+        val context = FeatureUpdateContext(flags(Flag.UpdateOnly))
 
         val featureProcessor: ConfiguredFeature[_, _] => FeatureProcessResult = feature =>
             feature.feature.process(feature.config, context)
@@ -62,7 +63,7 @@ object UpdaterMain {
         val getFeaturePostProcessWarnings: ConfiguredFeature[_, _] => List[ElementError] = feature =>
             feature.feature.getPostProcessWarnings(feature.config, context)
 
-        FeatureUpdater.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings, assumeYes)
+        FeatureUpdater.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings)
     }
 
     def printHelp(): Unit = {

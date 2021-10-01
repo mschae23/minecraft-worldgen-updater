@@ -14,6 +14,13 @@ extension [T](self: T) {
     }
 }
 
+def colored(text: String, color: String)(using flags: Map[Flag, Boolean]): String = {
+    if (!flags(Flag.Colored))
+        text
+    else
+        color + text + Console.RESET
+}
+
 @throws[IOException]
 def read(file: Path): String = {
     Using.Manager { use =>

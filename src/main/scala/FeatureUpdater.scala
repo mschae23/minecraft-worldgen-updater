@@ -16,9 +16,9 @@ object FeatureUpdater {
 
     def process[T: Codec](originPath: Path, targetPath: Path,
                           processor: T => ProcessResult[T],
-                          getPostProcessWarnings: T => List[ElementError], assumeYes: Boolean): Unit = {
-        if (originPath.equals(targetPath) && !assumeYes) {
-            println("Origin and target path are the same. The origin files will be overwritten.")
+                          getPostProcessWarnings: T => List[ElementError])(using flags: Flags): Unit = {
+        if (originPath.equals(targetPath) && !flags(Flag.AssumeYes)) {
+            println(colored("Origin and target path are the same. The origin files will be overwritten.", Console.YELLOW))
             println("Continue (y / N)? ")
 
             Using(new Scanner(System.in)) { scanner =>
@@ -29,7 +29,7 @@ object FeatureUpdater {
                         println("Write either \"y\" for yes or \"n\" for no.")
                     }
 
-                    println("Aborting.")
+                    println(colored("Aborting.", Console.YELLOW))
                     return;
                 }
             }
@@ -43,7 +43,7 @@ object FeatureUpdater {
 
     def processFeatureFile[T: Codec](originFile: Path, targetFile: Path,
                                      processor: T => ProcessResult[T],
-                                     getPostProcessWarnings: T => List[ElementError]): FileProcessResult = {
+                                     getPostProcessWarnings: T => List[ElementError])(using flags: Flags): FileProcessResult = {
         Option(targetFile.getParent).foreach(Files.createDirectories(_))
 
         val result = this.processFile[T](originFile, targetFile, processor, getPostProcessWarnings)
@@ -59,7 +59,7 @@ object FeatureUpdater {
 
     def processDirectory[T: Codec](originDirectory: Path, targetDirectory: Path,
                                    processor: T => ProcessResult[T],
-                                   getPostProcessWarnings: T => List[ElementError]): Unit = {
+                                   getPostProcessWarnings: T => List[ElementError])(using flags: Flags): Unit = {
         if (!Files.exists(originDirectory) || !Files.isDirectory(originDirectory))
             throw new IllegalArgumentException(s"${originDirectory.getFileName} doesn't exist or is not a directory")
 
@@ -91,14 +91,19 @@ object FeatureUpdater {
             }
         }
 
-        val notice = if (foundErrors) "Done with errors." else if (foundWarnings) "Done with warnings." else "Done."
+        val notice =
+            if (foundErrors)
+                colored("Done with errors.", WarningType.Error.color)
+            else if (foundWarnings)
+                colored("Done with warnings.", WarningType.Warning.color)
+            else colored("Done.", Console.GREEN)
 
         println(notice)
     }
 
     def processFile[T: Codec](originFile: Path, targetFile: Path,
                               processor: T => ProcessResult[T],
-                              getPostProcessWarnings: T => List[ElementError]): FileProcessResult = {
+                              getPostProcessWarnings: T => List[ElementError])(using flags: Flags): FileProcessResult = {
         var lifecycle = Lifecycle.Stable
 
         val originString = read(originFile)
@@ -140,8 +145,8 @@ object FeatureUpdater {
         return if (foundWarnings) FileProcessResult.Warnings(warnings) else FileProcessResult.Normal
     }
 
-    def printWarnings(warningType: WarningType, warnings: List[ElementError]): Unit = {
-        println(s"${warningType.label} found:")
+    def printWarnings(warningType: WarningType, warnings: List[ElementError])(using flags: Flags): Unit = {
+        println(colored(s"${warningType.label} found:", warningType.color))
         println(warnings.mkString("- ", "\n- ", ""))
     }
 }
