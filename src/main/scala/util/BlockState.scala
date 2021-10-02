@@ -24,7 +24,7 @@ object BlockState {
                 decodedName <- Identifier.createCodec("minecraft").decodeElement(map.getOrElse("Name",
                     return Failure(List(RecordParseError.MissingKey(element, List(ElementNode.Name("Name")))))))
                 result <- Success(BlockState(decodedName, map.getOrElse("Properties",
-                    return Failure(List(RecordParseError.MissingKey(element, List(ElementNode.Name("Properties")))))) match {
+                    Element.ObjectElement(Map.empty)) match {
                     case Element.ObjectElement(properties) => properties
                     case e => return Failure(List(RecordParseError.NotAnObject(e, List(ElementNode.Name("Properties")))))
                 }))

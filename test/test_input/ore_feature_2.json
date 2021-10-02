@@ -6,9 +6,7 @@
           "predicate_type": "always_true"
         },
         "state": {
-          "Name": "iron_ore",
-          "Properties": {
-          }
+          "Name": "iron_ore"
         },
         "size": 51
       },

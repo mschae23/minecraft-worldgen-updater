@@ -1,6 +1,6 @@
 package de.martenschaefer.minecraft.worldgenupdater
 
-import java.nio.file.{ Files, Path, Paths }
+import java.nio.file.{ Files, LinkOption, Path, Paths }
 import java.util.Scanner
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.util.Using
@@ -12,12 +12,11 @@ import feature.ConfiguredFeature
 import util.*
 
 object FeatureUpdater {
-    private val JSON_SUFFIX = ".json"
-
     def process[T: Codec](originPath: Path, targetPath: Path,
                           processor: T => ProcessResult[T],
-                          getPostProcessWarnings: T => List[ElementError])(using flags: Flags): Unit = {
-        if (originPath.equals(targetPath) && !flags(Flag.AssumeYes)) {
+                          getPostProcessWarnings: T => List[ElementError],
+                          fileNameRegex: String)(using flags: Flags): Unit = {
+        if (originPath.equals(targetPath) && !Flag.AssumeYes.get) {
             println(colored("Origin and target path are the same. The origin files will be overwritten.", Console.YELLOW))
             println("Continue (y / N)? ")
 
@@ -36,7 +35,7 @@ object FeatureUpdater {
         }
 
         if (Files.isDirectory(originPath))
-            this.processDirectory(originPath, targetPath, processor, getPostProcessWarnings)
+            this.processDirectory(originPath, targetPath, processor, getPostProcessWarnings, fileNameRegex)
         else if (Files.isRegularFile(originPath))
             this.processFeatureFile(originPath, targetPath, processor, getPostProcessWarnings)
     }
@@ -59,7 +58,8 @@ object FeatureUpdater {
 
     def processDirectory[T: Codec](originDirectory: Path, targetDirectory: Path,
                                    processor: T => ProcessResult[T],
-                                   getPostProcessWarnings: T => List[ElementError])(using flags: Flags): Unit = {
+                                   getPostProcessWarnings: T => List[ElementError],
+                                   fileNameRegex: String)(using flags: Flags): Unit = {
         if (!Files.exists(originDirectory) || !Files.isDirectory(originDirectory))
             throw new IllegalArgumentException(s"${originDirectory.getFileName} doesn't exist or is not a directory")
 
@@ -72,21 +72,28 @@ object FeatureUpdater {
         var foundErrors = false
 
         Using(Files.newDirectoryStream(originDirectory)) { directoryStream =>
-            for (path <- directoryStream.asScala if path.getFileName.toString.endsWith(JSON_SUFFIX)) {
-                println(s"[info] Processing ${path.getFileName}")
+            for (path <- directoryStream.asScala) {
+                if (Flag.Recursive.get && Files.isDirectory(path)) {
+                    processDirectory(path, targetDirectory.resolve(path.getFileName),
+                        processor, getPostProcessWarnings, fileNameRegex)
+                }
 
-                val result = processFile[T](path, targetDirectory.resolve(path.getFileName), processor, getPostProcessWarnings)
+                if (path.getFileName.toString.matches(fileNameRegex)) {
+                    println(s"[info] Processing ${path.getFileName}")
 
-                result match {
-                    case FileProcessResult.Errors(errors) => println()
-                        printWarnings(WarningType.Error, errors)
-                        println()
-                        foundErrors = true
-                    case FileProcessResult.Warnings(warnings) => println()
-                        printWarnings(WarningType.Warning, warnings)
-                        println()
-                        foundWarnings = true
-                    case _ =>
+                    val result = processFile[T](path, targetDirectory.resolve(path.getFileName), processor, getPostProcessWarnings)
+
+                    result match {
+                        case FileProcessResult.Errors(errors) => println()
+                            printWarnings(WarningType.Error, errors)
+                            println()
+                            foundErrors = true
+                        case FileProcessResult.Warnings(warnings) => println()
+                            printWarnings(WarningType.Warning, warnings)
+                            println()
+                            foundWarnings = true
+                        case _ =>
+                    }
                 }
             }
         }

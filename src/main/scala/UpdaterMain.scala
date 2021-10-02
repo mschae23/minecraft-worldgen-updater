@@ -23,12 +23,16 @@ object UpdaterMain {
             withFlags(Map(
                 Flag.AssumeYes -> ("assume-yes", Some('y')),
                 Flag.UpdateOnly -> ("update-only", Some('u')),
-                Flag.Colored -> ("colored", None))) { flags =>
-                literal("features") {
-                    argument(CommandArgument.string("origin")) { origin =>
-                        argument(CommandArgument.string("target")) { target =>
-                            result {
-                                this.processFeatures(origin, target)(using flags)
+                Flag.Colored -> ("colored", None),
+                Flag.Recursive -> ("recursive", Some('r')),
+                Flag.ReducedDebugInfo -> ("reduced-debug-info", None))) { flags =>
+                defaultedArgumentFlag("matches", None, CommandArgument.string("file name regex"), ".+\\.json$") { fileNameRegex =>
+                    literal("features") {
+                        argument(CommandArgument.string("origin")) { origin =>
+                            argument(CommandArgument.string("target")) { target =>
+                                result {
+                                    this.processFeatures(origin, target, fileNameRegex)(using flags)
+                                }
                             }
                         }
                     }
@@ -51,7 +55,7 @@ object UpdaterMain {
         }
     }
 
-    def processFeatures(origin: String, target: String)(using flags: Flags): Unit = {
+    def processFeatures(origin: String, target: String, fileNameRegex: String)(using flags: Flags): Unit = {
         val originPath = Paths.get(origin)
         val targetPath = Paths.get(target)
 
@@ -63,7 +67,7 @@ object UpdaterMain {
         val getFeaturePostProcessWarnings: ConfiguredFeature[_, _] => List[ElementError] = feature =>
             feature.feature.getPostProcessWarnings(feature.config, context)
 
-        FeatureUpdater.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings)
+        FeatureUpdater.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings, fileNameRegex)
     }
 
     def printHelp(): Unit = {
