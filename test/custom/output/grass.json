@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:random_patch",
+  "config": {
+    "blacklist": [],
+    "state_provider": {
+      "state": {
+        "Name": "minecraft:grass"
+      },
+      "type": "minecraft:simple_state_provider"
+    },
+    "xspread": 7,
+    "zspread": 7,
+    "can_replace": false,
+    "yspread": 3,
+    "project": false,
+    "need_water": false,
+    "block_placer": {
+      "type": "minecraft:simple_block_placer"
+    },
+    "disallowed": [
+      {
+        "Properties": {
+          "snowy": "false"
+        },
+        "Name": "minecraft:grass_block"
+      }
+    ],
+    "tries": 32
+  }
+}

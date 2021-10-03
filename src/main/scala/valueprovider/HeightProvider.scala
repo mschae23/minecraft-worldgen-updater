@@ -18,12 +18,14 @@ object HeightProvider {
     val errorMsg = (path: String) =>
         s"$path can be an int, or a \"constant\", \"uniform\", \"biased_to_bottom\", \"very_biased_to_bottom\", or \"trapezoid\" height provider"
 
-    given Codec[HeightProvider] = Codec.either(errorMsg)(using Codec[Int], Registry[HeightProviderType[_]]
+    given Codec[HeightProvider] = Codec.either(errorMsg)(using Codec.either(errorMsg)(using Codec[YOffset], Codec[Int]),
+        Registry[HeightProviderType[_]]
         .dispatch[HeightProvider](_.providerType, _.codec)).xmap(_ match {
-        case Left(value) => ConstantHeightProvider(YOffset.Fixed(value))
+        case Left(Left(offset)) => ConstantHeightProvider(offset)
+        case Left(Right(value)) => ConstantHeightProvider(YOffset.Fixed(value))
         case Right(provider) => provider
     })(_ match {
-        case ConstantHeightProvider(YOffset.Fixed(value)) => Left(value)
+        case ConstantHeightProvider(YOffset.Fixed(value)) => Left(Right(value))
         case provider => Right(provider)
     })
 }

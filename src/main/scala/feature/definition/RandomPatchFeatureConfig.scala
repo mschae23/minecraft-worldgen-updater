@@ -43,7 +43,7 @@ object RandomPatchFeatureConfig {
         else
             Success(RandomPatchFeatureConfig(old1.tries, old1.spreadX, old1.spreadY, old1.whitelist.map(_.name), old1.blacklist,
                 !old1.needsWater, Features.SIMPLE_BLOCK.configure(SimpleBlockFeatureConfig(old1.stateProvider))))
-    })(_ => Failure(List.empty))
+    })(_ => Failure(List(ValidationError(path => s"random patch encoding failure at $path", List.empty))))
 
     val currentCodec: Codec[RandomPatchFeatureConfig] = Codec.record {
         val tries = Codec[Int].orElse(128).fieldOf("tries").forGetter[RandomPatchFeatureConfig](_.tries)

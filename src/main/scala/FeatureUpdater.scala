@@ -34,9 +34,20 @@ object FeatureUpdater {
             }
         }
 
-        if (Files.isDirectory(originPath))
-            this.processDirectory(originPath, targetPath, processor, getPostProcessWarnings, fileNameRegex)
-        else if (Files.isRegularFile(originPath))
+        if (Files.isDirectory(originPath)) {
+            val warningType = this.processDirectory(originPath, targetPath, originPath,
+                processor, getPostProcessWarnings, fileNameRegex)
+
+            val notice = warningType match {
+                case WarningType.Error =>
+                    colored("Done with errors.", WarningType.Error.color)
+                case WarningType.Warning =>
+                    colored("Done with warnings.", WarningType.Warning.color)
+                case _ => colored("Done.", WarningType.Okay.color)
+            }
+
+            println(notice)
+        } else if (Files.isRegularFile(originPath))
             this.processFeatureFile(originPath, targetPath, processor, getPostProcessWarnings)
     }
 
@@ -57,9 +68,10 @@ object FeatureUpdater {
     }
 
     def processDirectory[T: Codec](originDirectory: Path, targetDirectory: Path,
+                                   startingDirectory: Path,
                                    processor: T => ProcessResult[T],
                                    getPostProcessWarnings: T => List[ElementError],
-                                   fileNameRegex: String)(using flags: Flags): Unit = {
+                                   fileNameRegex: String, recursive: Boolean = false)(using flags: Flags): WarningType = {
         if (!Files.exists(originDirectory) || !Files.isDirectory(originDirectory))
             throw new IllegalArgumentException(s"${originDirectory.getFileName} doesn't exist or is not a directory")
 
@@ -74,12 +86,18 @@ object FeatureUpdater {
         Using(Files.newDirectoryStream(originDirectory)) { directoryStream =>
             for (path <- directoryStream.asScala) {
                 if (Flag.Recursive.get && Files.isDirectory(path)) {
-                    processDirectory(path, targetDirectory.resolve(path.getFileName),
-                        processor, getPostProcessWarnings, fileNameRegex)
+                    processDirectory(path, targetDirectory.resolve(path.getFileName), startingDirectory,
+                        processor, getPostProcessWarnings, fileNameRegex, true) match {
+                        case WarningType.Error => foundErrors = true
+                        case WarningType.Warning => foundWarnings = true
+                        case _ =>
+                    }
                 }
 
                 if (path.getFileName.toString.matches(fileNameRegex)) {
-                    println(s"[info] Processing ${path.getFileName}")
+                    val relativePath = startingDirectory.relativize(path)
+
+                    println(s"[info] Processing $relativePath")
 
                     val result = processFile[T](path, targetDirectory.resolve(path.getFileName), processor, getPostProcessWarnings)
 
@@ -98,14 +116,9 @@ object FeatureUpdater {
             }
         }
 
-        val notice =
-            if (foundErrors)
-                colored("Done with errors.", WarningType.Error.color)
-            else if (foundWarnings)
-                colored("Done with warnings.", WarningType.Warning.color)
-            else colored("Done.", Console.GREEN)
-
-        println(notice)
+        return if (foundErrors) WarningType.Error
+        else if (foundWarnings) WarningType.Warning
+        else WarningType.Okay
     }
 
     def processFile[T: Codec](originFile: Path, targetFile: Path,

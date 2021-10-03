@@ -38,3 +38,6 @@ project/target/
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Test
+test/terralith/

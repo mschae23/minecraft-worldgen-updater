@@ -78,6 +78,9 @@ object UpdaterMain {
         printFlag(Some('h'), "help", "Shows a list of commands and flags", 4)
         printFlag(Some('u'), "update-only", "Disables optimization of features", 2)
         printFlag(Some('y'), "assume-yes", "Skip question if input files would be overwritten", 2)
+        printFlag(None, "colored", "Use colored output", 2)
+        printFlag(Some('r'), "recursive", "Recursively process features in subfolders", 2)
+        printFlag(None, "reduced-debug-info", "Does nothing at the moment", 1)
     }
 
     private def printFlag(shortFlag: Option[Char], flag: String, description: String, tabs: Int): Unit =
