@@ -16,7 +16,7 @@ object RandomPatchFeatureConfig {
     case class Old1(val stateProvider: BlockStateProvider, val blockPlacer: BlockPlacer,
                     val whitelist: List[BlockState], val blacklist: List[BlockState], val tries: Int,
                     val spreadX: Int, val spreadY: Int, val spreadZ: Int,
-                    val canReplace: Boolean, val project: Boolean, val needsWater: Boolean) extends FeatureConfig
+                    val canReplace: Boolean, val project: Boolean, val needsWater: Boolean)
 
     given Codec[Old1] = Codec.record {
         val stateProvider = Codec[BlockStateProvider].fieldOf("state_provider").forGetter[Old1](_.stateProvider)
@@ -43,7 +43,7 @@ object RandomPatchFeatureConfig {
         else
             Success(RandomPatchFeatureConfig(old1.tries, old1.spreadX, old1.spreadY, old1.whitelist.map(_.name), old1.blacklist,
                 !old1.needsWater, Features.SIMPLE_BLOCK.configure(SimpleBlockFeatureConfig(old1.stateProvider))))
-    })(_ => Failure(List(ValidationError(path => s"random patch encoding failure at $path", List.empty))).printlnDebug)
+    })(_ => Failure(List(ValidationError(path => s"random patch encoding failure at $path", List.empty))))
 
     val currentCodec: Codec[RandomPatchFeatureConfig] = Codec.record {
         val tries = Codec[Int].orElse(128).fieldOf("tries").forGetter[RandomPatchFeatureConfig](_.tries)
