@@ -9,7 +9,7 @@ import scala.util.Using
 
 extension [T](self: T) {
     def printlnDebug: T = {
-        println(self)
+        println("[debug] " + self)
         self
     }
 }

@@ -15,7 +15,7 @@ trait BlockPlacer {
 object BlockPlacer {
     given Codec[BlockPlacer] = Registry[BlockPlacerType[_]].dispatch(_.placerType, _.codec)
 
-    BlockPredicateTypes // init
+    BlockPlacerTypes // init
 }
 
 case class BlockPlacerType[P <: BlockPlacer](val codec: Codec[P])

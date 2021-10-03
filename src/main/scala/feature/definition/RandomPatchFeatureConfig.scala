@@ -5,7 +5,7 @@ import de.martenschaefer.data.serialization.{ Codec, ValidationError }
 import de.martenschaefer.data.util.DataResult.*
 import de.martenschaefer.data.util.Identifier
 import feature.{ ConfiguredFeature, FeatureConfig, Features }
-import util.BlockState
+import util.*
 import valueprovider.{ BlockPlacer, BlockStateProvider }
 
 case class RandomPatchFeatureConfig(val tries: Int, val spreadXz: Int, val spreadY: Int,
@@ -16,13 +16,13 @@ object RandomPatchFeatureConfig {
     case class Old1(val stateProvider: BlockStateProvider, val blockPlacer: BlockPlacer,
                     val whitelist: List[BlockState], val blacklist: List[BlockState], val tries: Int,
                     val spreadX: Int, val spreadY: Int, val spreadZ: Int,
-                    val canReplace: Boolean, val project: Boolean, val needsWater: Boolean)
+                    val canReplace: Boolean, val project: Boolean, val needsWater: Boolean) extends FeatureConfig
 
     given Codec[Old1] = Codec.record {
         val stateProvider = Codec[BlockStateProvider].fieldOf("state_provider").forGetter[Old1](_.stateProvider)
         val blockPlacer = Codec[BlockPlacer].fieldOf("block_placer").forGetter[Old1](_.blockPlacer)
         val whitelist = Codec[List[BlockState]].fieldOf("whitelist").forGetter[Old1](_.whitelist)
-        val blacklist = Codec[List[BlockState]].fieldOf("backlist").forGetter[Old1](_.blacklist)
+        val blacklist = Codec[List[BlockState]].fieldOf("blacklist").forGetter[Old1](_.blacklist)
         val tries = Codec[Int].orElse(128).fieldOf("tries").forGetter[Old1](_.tries)
 
         val spreadX = Codec[Int].orElse(7).fieldOf("xspread").forGetter[Old1](_.spreadX)
@@ -43,7 +43,7 @@ object RandomPatchFeatureConfig {
         else
             Success(RandomPatchFeatureConfig(old1.tries, old1.spreadX, old1.spreadY, old1.whitelist.map(_.name), old1.blacklist,
                 !old1.needsWater, Features.SIMPLE_BLOCK.configure(SimpleBlockFeatureConfig(old1.stateProvider))))
-    })(_ => Failure(List(ValidationError(path => s"random patch encoding failure at $path", List.empty))))
+    })(_ => Failure(List(ValidationError(path => s"random patch encoding failure at $path", List.empty))).printlnDebug)
 
     val currentCodec: Codec[RandomPatchFeatureConfig] = Codec.record {
         val tries = Codec[Int].orElse(128).fieldOf("tries").forGetter[RandomPatchFeatureConfig](_.tries)
