@@ -4,7 +4,7 @@ import java.nio.file.{ Files, LinkOption, Path, Paths }
 import java.util.Scanner
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.util.Using
-import de.martenschaefer.data.serialization.{ Codec, ElementError, JsonCodecs, ValidationError }
+import de.martenschaefer.data.serialization.{ AlternativeError, Codec, Element, ElementError, ElementNode, JsonCodecs, RecordParseError, ValidationError }
 import de.martenschaefer.data.serialization.JsonCodecs.given
 import de.martenschaefer.data.util.DataResult.*
 import de.martenschaefer.data.util.Lifecycle
@@ -165,8 +165,43 @@ object FeatureUpdater {
         return if (foundWarnings) FileProcessResult.Warnings(warnings) else FileProcessResult.Normal
     }
 
-    def printWarnings(warningType: WarningType, warnings: List[ElementError])(using flags: Flags): Unit = {
-        println(colored(s"${warningType.label} found:", warningType.color))
-        println(warnings.mkString("- ", "\n- ", ""))
+    def printWarnings(warningType: WarningType, warnings: List[ElementError], indent: Int = 0)(using flags: Flags): Unit = {
+        if (indent == 0)
+            println(colored(s"${warningType.label} found:", warningType.color))
+
+        for (warning <- warnings)
+            printWarning(warningType, warning, indent)
+    }
+
+    private val DIMMED: String = "\u001b[2m"
+
+    def printWarning(warningType: WarningType, warning: ElementError, indent: Int = 0)(using flags: Flags): Unit = {
+        val indentation = "  ".repeat(indent)
+
+        val warningString = warning match {
+            case _ if warning.isInstanceOf[RecordParseError] => {
+                val parseError = warning.asInstanceOf[RecordParseError]
+
+                warning.getDescription(ElementError.getPath(warning.path))
+                    + ": " + colored(parseError.element.toString, DIMMED)
+            }
+
+            case AlternativeError(errors, path) => {
+                println(indentation + "- " + ElementError.getPath(path) + ": Multiple alternatives failed:")
+
+                for (i <- 0 until errors.length) {
+                    val alternative = errors(i)
+
+                    println(indentation + s"  - Alternative ${i + 1}:")
+                    printWarnings(warningType, alternative, indent + 2)
+                }
+
+                return;
+            }
+
+            case _ => warning.toString
+        }
+
+        println(indentation + "- " + warningString)
     }
 }

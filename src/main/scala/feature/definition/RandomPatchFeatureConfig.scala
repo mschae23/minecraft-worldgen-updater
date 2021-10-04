@@ -36,7 +36,7 @@ object RandomPatchFeatureConfig {
         Codec.build(Old1(stateProvider.get, blockPlacer.get, whitelist.get, blacklist.get, tries.get, spreadX.get, spreadY.get, spreadZ.get, canReplace.get, project.get, needsWater.get))
     }
 
-    val old1Codec: Codec[RandomPatchFeatureConfig] = Codec[Old1].flatXmap((old1, element) => {
+    val old1Codec: Codec[RandomPatchFeatureConfig] = Codec[Old1].flatXmap(old1 => {
         if (old1.spreadX != old1.spreadZ)
             Failure(List(ValidationError(path => s"$path: Can't update random patch feature; xspread (${old1.spreadX}) and zspread (${old1.spreadZ}) are different",
                 List.empty)))

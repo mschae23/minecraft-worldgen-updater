@@ -17,7 +17,7 @@ object Direction {
     private given EitherError =
         EitherError(path => s"$path should be \"down\", \"up\", \"north\", \"south\", \"west\", or \"east\"")
 
-    given Codec[Direction] = Codec[String].flatXmap((name, _) => name match {
+    given Codec[Direction] = Codec[String].flatXmap(_ match {
         case "down" => Success(Direction.Down)
         case "up" => Success(Direction.Up)
         case "north" => Success(Direction.North)

@@ -16,7 +16,8 @@ class DefaultFeatureCodec(codec: Codec[ConfiguredFeature[_, _]]) extends Codec[C
         case Failure(errors, lifecycle) => element match {
             case Element.ObjectElement(map) =>
                 if (map.contains("type") && map.contains("config"))
-                    if (errors.exists(_.isInstanceOf[Registry.UnknownRegistryIdError]))
+                    if (errors.exists(error => error.isInstanceOf[Registry.UnknownRegistryIdError]
+                        && (error.asInstanceOf[Registry.UnknownRegistryIdError].element == map("type"))))
                         Success(ConfiguredFeature(DefaultFeature(element), null), lifecycle)
                     else
                         Failure(errors, lifecycle)

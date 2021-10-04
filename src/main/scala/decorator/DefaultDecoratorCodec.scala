@@ -16,7 +16,8 @@ class DefaultDecoratorCodec(codec: Codec[ConfiguredDecorator[_, _]]) extends Cod
         case Failure(errors, lifecycle) => element match {
             case Element.ObjectElement(map) =>
                 if (map.contains("type") && map.contains("config"))
-                    if (errors.exists(_.isInstanceOf[Registry.UnknownRegistryIdError]))
+                    if (errors.exists(error => error.isInstanceOf[Registry.UnknownRegistryIdError]
+                        && (error.asInstanceOf[Registry.UnknownRegistryIdError].element == map("type"))))
                         Success(ConfiguredDecorator(DefaultDecorator(element), null), lifecycle)
                     else
                         Failure(errors, lifecycle)
