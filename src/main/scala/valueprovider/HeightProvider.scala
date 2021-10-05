@@ -4,9 +4,10 @@ package valueprovider
 import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
-import de.martenschaefer.data.serialization.Codec
-import de.martenschaefer.data.util._
-import de.martenschaefer.minecraft.worldgenupdater.util.YOffset
+import de.martenschaefer.data.serialization.{ Codec, ValidationError }
+import de.martenschaefer.data.util.*
+import de.martenschaefer.data.util.DataResult.*
+import util.YOffset
 
 trait HeightProvider {
     val providerType: HeightProviderType[_]
@@ -15,19 +16,20 @@ trait HeightProvider {
 }
 
 object HeightProvider {
-    val errorMsg = (path: String) =>
-        s"$path can be an int, or a \"constant\", \"uniform\", \"biased_to_bottom\", \"very_biased_to_bottom\", or \"trapezoid\" height provider"
-
-    given Codec[HeightProvider] = Codec.either(errorMsg)(using Codec.either(errorMsg)(using Codec[YOffset], Codec[Int]),
-        Registry[HeightProviderType[_]]
-        .dispatch[HeightProvider](_.providerType, _.codec)).xmap(_ match {
-        case Left(Left(offset)) => ConstantHeightProvider(offset)
-        case Left(Right(value)) => ConstantHeightProvider(YOffset.Fixed(value))
-        case Right(provider) => provider
-    })(_ match {
-        case ConstantHeightProvider(YOffset.Fixed(value)) => Left(Right(value))
-        case provider => Right(provider)
+    private val offsetHeightProviderCodec: Codec[HeightProvider] = Codec[YOffset].flatXmap(offset =>
+        Success(ConstantHeightProvider(offset)))(_ match {
+        case ConstantHeightProvider(offset) => Success(offset)
+        case _ => Failure(List(ValidationError(path => s"$path: Not a constant height provider", List.empty)))
     })
+
+    private val intHeightProviderCodec: Codec[HeightProvider] = Codec[Int].flatXmap(value =>
+        Success(ConstantHeightProvider(YOffset.Fixed(value))))(_ match {
+        case ConstantHeightProvider(YOffset.Fixed(value)) => Success(value)
+        case _ => Failure(List(ValidationError(path => s"$path: Not a constant height provider with an absolute Y value", List.empty)))
+    })
+
+    given Codec[HeightProvider] = Codec.alternatives(List(offsetHeightProviderCodec, intHeightProviderCodec,
+        Registry[HeightProviderType[_]].dispatch[HeightProvider](_.providerType, _.codec)))
 }
 
 case class HeightProviderType[P <: HeightProvider](val codec: Codec[P])

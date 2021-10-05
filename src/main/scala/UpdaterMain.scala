@@ -75,14 +75,14 @@ object UpdaterMain {
         println("update features <origin> <target>")
         println()
         println("Flags:")
-        printFlag(Some('h'), "help", "Shows a list of commands and flags", 4)
-        printFlag(Some('u'), "update-only", "Disables optimization of features", 2)
-        printFlag(Some('y'), "assume-yes", "Skip question if input files would be overwritten", 2)
-        printFlag(None, "colored", "Use colored output", 2)
-        printFlag(Some('r'), "recursive", "Recursively process features in subfolders", 2)
-        printFlag(None, "reduced-debug-info", "Does nothing at the moment", 1)
+        printFlag(Some('h'), "help", "Shows a list of commands and flags")
+        printFlag(Some('u'), "update-only", "Disables optimization of features")
+        printFlag(Some('y'), "assume-yes", "Skip question if input files would be overwritten")
+        printFlag(None, "colored", "Use colored output")
+        printFlag(Some('r'), "recursive", "Recursively process features in subfolders")
+        printFlag(None, "reduced-debug-info", "Removes some debug information for errors")
     }
 
-    private def printFlag(shortFlag: Option[Char], flag: String, description: String, tabs: Int): Unit =
-        println(shortFlag.map("-" + _.toString).getOrElse("") + "\t\t--" + flag + "\t".repeat(tabs) + description)
+    private def printFlag(shortFlag: Option[Char], flag: String, description: String): Unit =
+        println(shortFlag.map("-" + _.toString).getOrElse("  ") + "   --" + flag + " ".repeat(24 - flag.length) + description)
 }

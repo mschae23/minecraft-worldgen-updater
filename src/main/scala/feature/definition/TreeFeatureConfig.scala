@@ -86,5 +86,5 @@ object TreeFeatureConfig {
             dirtProvider.get, minimumSize.get, decorators.get, ignoreVines.get, forceDirt.get))
     }
 
-    given Codec[TreeFeatureConfig] = old2Codec.flatOrElse(currentCodec).flatOrElse(old1Codec)
+    given Codec[TreeFeatureConfig] = Codec.alternatives(List(old2Codec, currentCodec, old1Codec))
 }

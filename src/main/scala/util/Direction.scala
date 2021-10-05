@@ -14,8 +14,8 @@ enum Direction(val name: String) {
 }
 
 object Direction {
-    private given EitherError =
-        EitherError(path => s"$path should be \"down\", \"up\", \"north\", \"south\", \"west\", or \"east\"")
+    private val error: String => String = path =>
+        s"$path should be \"down\", \"up\", \"north\", \"south\", \"west\", or \"east\""
 
     given Codec[Direction] = Codec[String].flatXmap(_ match {
         case "down" => Success(Direction.Down)
@@ -25,6 +25,6 @@ object Direction {
         case "west" => Success(Direction.West)
         case "east" => Success(Direction.East)
 
-        case _ => Failure(List(ValidationError(path => EitherError.message(path), List.empty)))
+        case _ => Failure(List(ValidationError(path => path, List.empty)))
     })(direction => Success(direction.name))
 }

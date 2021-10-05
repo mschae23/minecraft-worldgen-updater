@@ -182,12 +182,18 @@ object FeatureUpdater {
             case _ if warning.isInstanceOf[RecordParseError] => {
                 val parseError = warning.asInstanceOf[RecordParseError]
 
+                val reducedDebugInfo = Flag.ReducedDebugInfo.get && (parseError.element match {
+                    case Element.ObjectElement(_) => true
+                    case Element.ArrayElement(_) => true
+                    case _ => false
+                })
+
                 warning.getDescription(ElementError.getPath(warning.path))
-                    + ": " + colored(parseError.element.toString, DIMMED)
+                    + ": " + (if (reducedDebugInfo) "<reduced debug info>" else colored(parseError.element.toString, DIMMED))
             }
 
             case AlternativeError(errors, path) => {
-                println(indentation + "- " + ElementError.getPath(path) + ": Multiple alternatives failed:")
+                println(indentation + "- " + "Multiple alternatives failed:")
 
                 for (i <- 0 until errors.length) {
                     val alternative = errors(i)

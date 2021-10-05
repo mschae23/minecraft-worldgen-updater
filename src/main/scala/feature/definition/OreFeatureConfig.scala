@@ -23,6 +23,5 @@ object OreFeatureConfig {
         Codec.build(OreFeatureConfig(targets.get, size.get, 0f))
     }
 
-    given Codec[OreFeatureConfig] = Codec.derived[OreFeatureConfig]
-        .flatOrElse(old2Codec).flatOrElse(old1Codec)
+    given Codec[OreFeatureConfig] = Codec.alternatives(List(Codec.derived[OreFeatureConfig], old2Codec, old1Codec))
 }

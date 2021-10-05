@@ -5,11 +5,12 @@ import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.Result
 import de.martenschaefer.data.serialization.{ Codec, Element }
 import de.martenschaefer.data.util.DataResult._
+import de.martenschaefer.data.util.Lifecycle
 
 class DefaultFeatureCodec(codec: Codec[ConfiguredFeature[_, _]]) extends Codec[ConfiguredFeature[_, _]] {
     override def encodeElement(value: ConfiguredFeature[_, _]): Result[Element] = value match {
         case ConfiguredFeature(DefaultFeature(element), _) => Success(element)
-        case feature => codec.encodeElement(feature)
+        case _ => codec.encodeElement(value)
     }
 
     override def decodeElement(element: Element): Result[ConfiguredFeature[_, _]] = codec.decodeElement(element) match {

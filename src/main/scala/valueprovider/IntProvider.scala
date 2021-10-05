@@ -4,7 +4,8 @@ package valueprovider
 import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
-import de.martenschaefer.data.serialization.Codec
+import de.martenschaefer.data.serialization.{ Codec, ValidationError }
+import de.martenschaefer.data.util.DataResult.*
 import de.martenschaefer.data.util.*
 import util.{ DataPool, Weighted }
 
@@ -25,17 +26,14 @@ trait IntProvider {
 }
 
 object IntProvider {
-    val errorMsg = (path: String) =>
-        s"$path can be an int, or a \"constant\", \"uniform\", \"biased_to_bottom\", or \"clamped\" height provider"
-
-    given Codec[IntProvider] = Codec.either(errorMsg)(using Codec[Int], Registry[IntProviderType[_]]
-        .dispatch[IntProvider](_.providerType, _.codec)).xmap(_ match {
-        case Left(value) => ConstantIntProvider(value)
-        case Right(provider) => provider
-    })(_ match {
-        case ConstantIntProvider(value) => Left(value)
-        case provider => Right(provider)
+    private val directIntProviderCodec: Codec[IntProvider] = Codec[Int].flatXmap(value =>
+        Success(ConstantIntProvider(value)))(_ match {
+        case ConstantIntProvider(value) => Success(value)
+        case _ => Failure(List(ValidationError(path => s"$path: Not a constant int provider", List.empty)))
     })
+
+    given Codec[IntProvider] = Codec.alternatives(List(directIntProviderCodec,
+        Registry[IntProviderType[_]].dispatch[IntProvider](_.providerType, _.codec)))
 
     IntProviderTypes // init
 }
