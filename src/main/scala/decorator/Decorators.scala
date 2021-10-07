@@ -18,7 +18,7 @@ object Decorators {
     val HEIGHTMAP_SPREAD_DOUBLE = register("heightmap_spread_double", HeightmapSpreadDoubleDecorator)
     val SURFACE_RELATIVE_THRESHOLD = register("surface_relative_threshold", new Decorator(Codec[SurfaceRelativeThresholdDecoratorConfig]))
     val WATER_DEPTH_THRESHOLD = register("water_depth_threshold", WaterDepthThresholdDecorator)
-    val BLOCK_SURVIVES_FILTER = register("block_survives_filter", new Decorator(Codec[BlockSurvivesFilterDecoratorConfig]))
+    val BLOCK_SURVIVES_FILTER = register("block_survives_filter", BlockSurvivesFilterDecorator)
     val BLOCK_FILTER = register("block_filter", BlockFilterDecorator)
 
     private def register[DC <: DecoratorConfig](name: String, decorator: Decorator[DC]): Decorator[DC] = {

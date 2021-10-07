@@ -9,16 +9,17 @@ import feature.{ ConfiguredFeature, FeatureProcessResult, Features }
 import valueprovider.{ AllOfBlockPredicate, BlockPredicate, MatchingBlocksBlockPredicate, NotBlockPredicate }
 import cats.data.Writer
 
-object BlockFilterDecorator extends Decorator(Codec[BlockFilterDecoratorConfig]) {
+case object BlockFilterDecorator extends Decorator(Codec[BlockFilterDecoratorConfig]) {
     override def process(config: BlockFilterDecoratorConfig, feature: ConfiguredFeature[_, _], context: FeatureUpdateContext): FeatureProcessResult = {
         if (config.old1.isDefined)
             Features.DECORATED.process(DecoratedFeatureConfig(feature, Decorators.BLOCK_FILTER.configure(
-                BlockFilterDecoratorConfig(updateOld1(config.old1.orNull)))), context)
+                BlockFilterDecoratorConfig(updateOld1(config.old1.orNull).process))), context)
         else if (!context.onlyUpdate)
             config.predicate match {
                 case AllOfBlockPredicate(Nil) => Writer(List.empty, feature)
 
-                case _ => super.process(config, feature, context)
+                case _ => Writer(List.empty, Features.DECORATED.configure(DecoratedFeatureConfig(feature,
+                    this.configure(BlockFilterDecoratorConfig(config.predicate.process)))))
             }
         else
             super.process(config, feature, context)

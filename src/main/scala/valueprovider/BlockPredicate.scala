@@ -6,18 +6,22 @@ import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.data.util.Identifier
-import util.BlockPos
+import util.{ BlockPos, BlockState }
 
 trait BlockPredicate {
     val predicateType: BlockPredicateType[_]
 
-    val process: BlockPredicate = this
+    def process: BlockPredicate = this
 }
 
 object BlockPredicate {
     given Codec[BlockPredicate] = Registry[BlockPredicateType[_]].dispatch(_.predicateType, _.codec)
 
     BlockPredicateTypes // init
+
+    val MATCHING_AIR = MatchingBlocksBlockPredicate(List(Identifier("minecraft", "air")), BlockPos.ORIGIN)
+    val MATCHING_AIR_OR_WATER = MatchingBlocksBlockPredicate(List(Identifier("minecraft", "air"),
+        Identifier("minecraft", "water")), BlockPos.ORIGIN)
 }
 
 case class BlockPredicateType[P <: BlockPredicate](val codec: Codec[P])
@@ -29,10 +33,12 @@ object BlockPredicateType {
 object BlockPredicateTypes {
     val MATCHING_BLOCKS = register("matching_blocks", Codec[MatchingBlocksBlockPredicate])
     val MATCHING_FLUIDS = register("matching_fluids", Codec[MatchingFluidsBlockPredicate])
-    val REPLACEABLE = register("replaceable", Codec[ReplaceableBlockPredicate.type])
+    val REPLACEABLE = register("replaceable", Codec[ReplaceableBlockPredicate])
+    val WOULD_SURVIVE = register("would_survive", Codec[WouldSurviveBlockPredicate])
     val ANY_OF = register("any_of", Codec[AnyOfBlockPredicate])
     val ALL_OF = register("all_of", Codec[AllOfBlockPredicate])
     val NOT = register("not", Codec[NotBlockPredicate])
+    val TRUE = register("true", Codec[TrueBlockPredicate.type])
 
     private def register[P <: BlockPredicate](name: String, codec: Codec[P]): BlockPredicateType[P] = {
         val predicateType = BlockPredicateType(codec)
@@ -42,25 +48,63 @@ object BlockPredicateTypes {
     }
 }
 
-case class MatchingBlocksBlockPredicate(val blocks: List[Identifier], val offset: BlockPos) extends BlockPredicate derives Codec {
+case class MatchingBlocksBlockPredicate(val blocks: List[Identifier], val offset: BlockPos) extends BlockPredicate {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.MATCHING_BLOCKS
 }
 
-case class MatchingFluidsBlockPredicate(val fluids: List[Identifier], val offset: BlockPos) extends BlockPredicate derives Codec {
+object MatchingBlocksBlockPredicate {
+    given Codec[MatchingBlocksBlockPredicate] = Codec.record {
+        val blocks = Codec[List[Identifier]].fieldOf("blocks").forGetter[MatchingBlocksBlockPredicate](_.blocks)
+        val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[MatchingBlocksBlockPredicate](_.offset)
+
+        Codec.build(MatchingBlocksBlockPredicate(blocks.get, offset.get))
+    }
+}
+
+case class MatchingFluidsBlockPredicate(val fluids: List[Identifier], val offset: BlockPos) extends BlockPredicate {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.MATCHING_FLUIDS
 }
 
-case object ReplaceableBlockPredicate extends BlockPredicate {
-    override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.REPLACEABLE
+object MatchingFluidsBlockPredicate {
+    given Codec[MatchingFluidsBlockPredicate] = Codec.record {
+        val blocks = Codec[List[Identifier]].fieldOf("fluids").forGetter[MatchingFluidsBlockPredicate](_.fluids)
+        val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[MatchingFluidsBlockPredicate](_.offset)
 
-    given Codec[ReplaceableBlockPredicate.type] = Codec.unit(ReplaceableBlockPredicate)
+        Codec.build(MatchingFluidsBlockPredicate(blocks.get, offset.get))
+    }
+}
+
+case class ReplaceableBlockPredicate(val offset: BlockPos) extends BlockPredicate {
+    override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.REPLACEABLE
+}
+
+object ReplaceableBlockPredicate {
+    given Codec[ReplaceableBlockPredicate] = Codec.record {
+        val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[ReplaceableBlockPredicate](_.offset)
+
+        Codec.build(ReplaceableBlockPredicate(offset.get))
+    }
+}
+
+case class WouldSurviveBlockPredicate(val offset: BlockPos, val state: BlockState) extends BlockPredicate {
+    override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.WOULD_SURVIVE
+}
+
+object WouldSurviveBlockPredicate {
+    given Codec[WouldSurviveBlockPredicate] = Codec.record {
+        val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[WouldSurviveBlockPredicate](_.offset)
+        val state = Codec[BlockState].fieldOf("state").forGetter[WouldSurviveBlockPredicate](_.state)
+
+        Codec.build(WouldSurviveBlockPredicate(offset.get, state.get))
+    }
 }
 
 case class AnyOfBlockPredicate(val predicates: List[BlockPredicate]) extends BlockPredicate derives Codec {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.ANY_OF
 
-    override val process: BlockPredicate = this.predicates match {
+    override def process: BlockPredicate = this.predicates match {
         case predicate :: Nil => predicate.process
+        case _ if this.predicates.contains(TrueBlockPredicate) => TrueBlockPredicate.process
 
         case _ => AnyOfBlockPredicate(this.predicates.map(_.process))
     }
@@ -69,8 +113,10 @@ case class AnyOfBlockPredicate(val predicates: List[BlockPredicate]) extends Blo
 case class AllOfBlockPredicate(val predicates: List[BlockPredicate]) extends BlockPredicate derives Codec {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.ALL_OF
 
-    this.predicates match {
+    override def process: BlockPredicate = this.predicates match {
         case predicate :: Nil => predicate.process
+        case _ if this.predicates.contains(TrueBlockPredicate) => AllOfBlockPredicate(this.predicates
+            .filter(_ != TrueBlockPredicate)).process
 
         case _ => AllOfBlockPredicate(this.predicates.map(_.process))
     }
@@ -79,9 +125,15 @@ case class AllOfBlockPredicate(val predicates: List[BlockPredicate]) extends Blo
 case class NotBlockPredicate(val predicate: BlockPredicate) extends BlockPredicate derives Codec {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.NOT
 
-    this.predicate match {
+    override def process: BlockPredicate = this.predicate match {
         case NotBlockPredicate(predicate) => predicate.process
 
         case _ => NotBlockPredicate(this.predicate.process)
     }
+}
+
+case object TrueBlockPredicate extends BlockPredicate {
+    override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.TRUE
+
+    given Codec[TrueBlockPredicate.type] = Codec.unit(TrueBlockPredicate)
 }

@@ -6,7 +6,7 @@ import de.martenschaefer.data.util.DataResult.*
 import feature.definition.BlockColumnFeatureConfig.Layer
 import feature.{ Feature, FeatureProcessResult, Features }
 import util.{ DataPool, Weighted }
-import valueprovider.{ ConstantIntProvider, WeightedListIntProvider }
+import valueprovider.{ BlockPredicate, ConstantIntProvider, WeightedListIntProvider }
 
 object GrowingPlantFeature extends Feature(Codec[GrowingPlantFeatureConfig]) {
     override def process(config: GrowingPlantFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {
@@ -14,6 +14,7 @@ object GrowingPlantFeature extends Feature(Codec[GrowingPlantFeatureConfig]) {
             WeightedListIntProvider(DataPool(config.heightDistribution.entries.map(weighted => Weighted.Present(
                 (if (context.onlyUpdate) weighted.data else weighted.data.process)
                     .map(_ - 1, _ - 1), weighted.weight)))), config.bodyProvider), Layer(ConstantIntProvider(1), config.headProvider)),
-            config.direction, config.allowWater, true), context)
+            config.direction, if (config.allowWater) BlockPredicate.MATCHING_AIR_OR_WATER
+            else BlockPredicate.MATCHING_AIR, true), context)
     }
 }

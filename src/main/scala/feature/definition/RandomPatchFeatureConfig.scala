@@ -4,13 +4,14 @@ package feature.definition
 import de.martenschaefer.data.serialization.{ Codec, ValidationError }
 import de.martenschaefer.data.util.DataResult.*
 import de.martenschaefer.data.util.Identifier
+import feature.definition.RandomPatchFeatureConfig.Old2
 import feature.{ ConfiguredFeature, FeatureConfig, Features }
 import util.*
 import valueprovider.{ BlockPlacer, BlockStateProvider }
 
 case class RandomPatchFeatureConfig(val tries: Int, val spreadXz: Int, val spreadY: Int,
-                                    val allowedOn: List[Identifier], val disallowedOn: List[BlockState],
-                                    val onlyInAir: Boolean, val feature: ConfiguredFeature[_, _]) extends FeatureConfig
+                                    val feature: ConfiguredFeature[_, _],
+                                    val old2: Option[Old2] = None) extends FeatureConfig
 
 object RandomPatchFeatureConfig {
     case class Old1(val stateProvider: BlockStateProvider, val blockPlacer: BlockPlacer,
@@ -41,24 +42,37 @@ object RandomPatchFeatureConfig {
             Failure(List(ValidationError(path => s"$path: Can't update random patch feature; xspread (${old1.spreadX}) and zspread (${old1.spreadZ}) are different",
                 List.empty)))
         else
-            Success(RandomPatchFeatureConfig(old1.tries, old1.spreadX, old1.spreadY, old1.whitelist.map(_.name), old1.blacklist,
-                !old1.needsWater, Features.SIMPLE_BLOCK.configure(SimpleBlockFeatureConfig(old1.stateProvider))))
+            Success(RandomPatchFeatureConfig(old1.tries, old1.spreadX, old1.spreadY,
+                Features.SIMPLE_BLOCK.configure(SimpleBlockFeatureConfig(old1.stateProvider)), Some(Old2(
+                    old1.whitelist.map(_.name), old1.blacklist, if (old1.needsWater) Some(false) else None))))
     })(_ => Failure(List(ValidationError(path => s"random patch encoding failure at $path", List.empty))))
+
+    case class Old2(val allowedOn: List[Identifier], val disallowedOn: List[BlockState], val onlyInAir: Option[Boolean])
+
+    val old2Codec: Codec[RandomPatchFeatureConfig] = Codec.record {
+        val tries = Codec[Int].orElse(128).fieldOf("tries").forGetter[RandomPatchFeatureConfig](_.tries)
+        val spreadXz = Codec[Int].orElse(7).fieldOf("xz_spread").forGetter[RandomPatchFeatureConfig](_.spreadXz)
+        val spreadY = Codec[Int].orElse(3).fieldOf("y_spread").forGetter[RandomPatchFeatureConfig](_.spreadY)
+
+        val allowedOn = Codec[List[Identifier]].fieldOf("allowed_on").forGetter[RandomPatchFeatureConfig](_.old2.get.allowedOn)
+        val disallowedOn = Codec[List[BlockState]].fieldOf("disallowed_on").forGetter[RandomPatchFeatureConfig](_.old2.get.disallowedOn)
+        val onlyInAir = Codec[Boolean].fieldOf("only_in_air").forGetter[RandomPatchFeatureConfig](_.old2.get.onlyInAir.getOrElse(false))
+
+        val feature = Codec[ConfiguredFeature[_, _]].fieldOf("feature").forGetter[RandomPatchFeatureConfig](_.feature)
+
+        Codec.build(RandomPatchFeatureConfig(tries.get, spreadXz.get, spreadY.get, feature.get, Some(Old2(
+            allowedOn.get, disallowedOn.get, Some(onlyInAir.get)))))
+    }
 
     val currentCodec: Codec[RandomPatchFeatureConfig] = Codec.record {
         val tries = Codec[Int].orElse(128).fieldOf("tries").forGetter[RandomPatchFeatureConfig](_.tries)
         val spreadXz = Codec[Int].orElse(7).fieldOf("xz_spread").forGetter[RandomPatchFeatureConfig](_.spreadXz)
         val spreadY = Codec[Int].orElse(3).fieldOf("y_spread").forGetter[RandomPatchFeatureConfig](_.spreadY)
 
-        val allowedOn = Codec[List[Identifier]].fieldOf("allowed_on").forGetter[RandomPatchFeatureConfig](_.allowedOn)
-        val disallowedOn = Codec[List[BlockState]].fieldOf("disallowed_on").forGetter[RandomPatchFeatureConfig](_.disallowedOn)
-        val onlyInAir = Codec[Boolean].fieldOf("only_in_air").forGetter[RandomPatchFeatureConfig](_.onlyInAir)
-
         val feature = Codec[ConfiguredFeature[_, _]].fieldOf("feature").forGetter[RandomPatchFeatureConfig](_.feature)
 
-        Codec.build(RandomPatchFeatureConfig(tries.get, spreadXz.get, spreadY.get, allowedOn.get, disallowedOn.get, onlyInAir.get, feature.get))
+        Codec.build(RandomPatchFeatureConfig(tries.get, spreadXz.get, spreadY.get, feature.get))
     }
 
-    given Codec[RandomPatchFeatureConfig] = currentCodec
-        .flatOrElse(old1Codec)
+    given Codec[RandomPatchFeatureConfig] = Codec.alternatives(List(old2Codec, currentCodec, old1Codec))
 }

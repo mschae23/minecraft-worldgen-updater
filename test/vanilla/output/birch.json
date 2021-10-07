@@ -54,14 +54,22 @@
     },
     "decorator": {
       "config": {
-        "state": {
-          "Name": "minecraft:birch_sapling",
-          "Properties": {
-            "stage": "0"
-          }
+        "predicate": {
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "state": {
+            "Name": "minecraft:birch_sapling",
+            "Properties": {
+              "stage": "0"
+            }
+          },
+          "type": "minecraft:would_survive"
         }
       },
-      "type": "minecraft:block_survives_filter"
+      "type": "minecraft:block_filter"
     }
   },
   "type": "minecraft:decorated"

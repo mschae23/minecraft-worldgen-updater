@@ -2,11 +2,12 @@ package de.martenschaefer.minecraft.worldgenupdater
 package feature.definition
 
 import de.martenschaefer.data.serialization.{ Codec, ElementError, ElementNode, ValidationError }
-import decorator.definition.{ BlockSurvivesFilterDecoratorConfig, HeightmapDecoratorConfig, WaterDepthThresholdDecoratorConfig }
+import decorator.definition.{ BlockFilterDecoratorConfig, BlockSurvivesFilterDecoratorConfig, HeightmapDecoratorConfig, WaterDepthThresholdDecoratorConfig }
 import decorator.{ ConfiguredDecorator, Decorators }
 import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, Features }
-import valueprovider.SimpleBlockStateProvider
+import valueprovider.{ SimpleBlockStateProvider, WouldSurviveBlockPredicate }
 import cats.data.Writer
+import de.martenschaefer.minecraft.worldgenupdater.util.BlockPos
 
 case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
     override def process(unprocessedConfig: TreeFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {
@@ -56,8 +57,8 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                 config.maxWaterDepth,
                 config.heightmap,
                 None
-            )), ConfiguredDecorator(Decorators.BLOCK_SURVIVES_FILTER, BlockSurvivesFilterDecoratorConfig(
-                config.saplingProvider.get.process.asInstanceOf[SimpleBlockStateProvider].state))), context)
+            )), ConfiguredDecorator(Decorators.BLOCK_FILTER, BlockFilterDecoratorConfig(WouldSurviveBlockPredicate(
+                BlockPos.ORIGIN, config.saplingProvider.get.process.asInstanceOf[SimpleBlockStateProvider].state)))), context)
         } else if (config.saplingProvider.isDefined) {
             Writer(getSaplingProviderErrorList,
                 ConfiguredFeature(Features.TREE, TreeFeatureConfig(
