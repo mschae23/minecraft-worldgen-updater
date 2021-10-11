@@ -12,7 +12,7 @@ import valueprovider.ConstantIntProvider
 case object RangeDecorator extends Decorator(Codec[RangeDecoratorConfig]) {
     override def process(config: RangeDecoratorConfig, feature: ConfiguredFeature[_, _], context: FeatureUpdateContext): FeatureProcessResult =
         processHeightReplacingDecorator(feature, Writer(List.empty, ConfiguredFeature(Features.DECORATED, DecoratedFeatureConfig(feature,
-            ConfiguredDecorator(Decorators.RANGE, RangeDecoratorConfig(config.height.process))))), context)
+            ConfiguredDecorator(Decorators.RANGE, RangeDecoratorConfig(if (context.onlyUpdate) config.height else config.height.process))))), context)
 
     def processHeightReplacingDecorator(feature: ConfiguredFeature[_, _], otherwise: => FeatureProcessResult, context: FeatureUpdateContext): FeatureProcessResult = {
         @tailrec

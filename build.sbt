@@ -1,11 +1,11 @@
-val scala3Version = "3.0.1"
+val scala3Version = "3.0.2"
 
 lazy val root = project
     .in(file("."))
     .settings(
         name := "minecraft-worldgen-updater",
         organization := "de.martenschaefer",
-        version := "1.8.0",
+        version := "1.9.0",
         homepage := Some(url("https://github.com/mschae23/minecraft-worldgen-updater")),
 
         scalaVersion := scala3Version,

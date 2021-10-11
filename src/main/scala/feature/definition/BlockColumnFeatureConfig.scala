@@ -12,7 +12,9 @@ case class BlockColumnFeatureConfig(val layers: List[Layer], val direction: Dire
                                     val allowedPlacement: BlockPredicate, val prioritizeTip: Boolean) extends FeatureConfig
 
 object BlockColumnFeatureConfig {
-    case class Layer(val height: IntProvider, val provider: BlockStateProvider) derives Codec
+    case class Layer(val height: IntProvider, val provider: BlockStateProvider) derives Codec {
+        def process: Layer = Layer(this.height.process, this.provider.process)
+    }
 
     case class Old1(val layers: List[Layer], val direction: Direction, val allowWater: Boolean, val prioritizeTip: Boolean) derives Codec
 

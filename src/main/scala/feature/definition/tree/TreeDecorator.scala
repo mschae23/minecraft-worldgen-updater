@@ -10,7 +10,7 @@ import de.martenschaefer.minecraft.worldgenupdater.valueprovider.{ BlockStatePro
 import util.*
 
 trait TreeDecorator {
-    val decoratorType: TreeDecoratorType[_]
+    def decoratorType: TreeDecoratorType[_]
 
     def process: TreeDecorator = this
 }
@@ -39,13 +39,13 @@ object TreeDecoratorType {
 }
 
 case object TrunkVineTreeDecorator extends TreeDecorator {
-    override val decoratorType: TreeDecoratorType[_] = TreeDecoratorType.TRUNK_VINE
+    override def decoratorType: TreeDecoratorType[_] = TreeDecoratorType.TRUNK_VINE
 
     given Codec[TrunkVineTreeDecorator.type] = Codec.unit(TrunkVineTreeDecorator)
 }
 
 case object LeavesVineTreeDecorator extends TreeDecorator {
-    override val decoratorType: TreeDecoratorType[_] = TreeDecoratorType.LEAVE_VINE
+    override def decoratorType: TreeDecoratorType[_] = TreeDecoratorType.LEAVE_VINE
 
     given Codec[LeavesVineTreeDecorator.type] = Codec.unit(LeavesVineTreeDecorator)
 }

@@ -10,6 +10,5 @@ import util.HeightmapType
 
 case object TopSolidHeightmapDecorator extends Decorator(Codec[DefaultDecoratorConfig]) {
     override def process(config: DefaultDecoratorConfig, feature: ConfiguredFeature[_, _], context: FeatureUpdateContext): FeatureProcessResult =
-        Features.DECORATED.process(DecoratedFeatureConfig(feature, ConfiguredDecorator(Decorators.HEIGHTMAP,
-            HeightmapDecoratorConfig(HeightmapType.OceanFloorWg))), context)
+        Decorators.HEIGHTMAP.process(HeightmapDecoratorConfig(HeightmapType.OceanFloorWg), feature, context)
 }

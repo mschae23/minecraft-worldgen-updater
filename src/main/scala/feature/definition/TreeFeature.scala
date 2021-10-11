@@ -74,9 +74,9 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                     config.maxWaterDepth,
                     config.heightmap,
                     None
-                )))
+                ).process))
         } else
-            Writer(List.empty, ConfiguredFeature(Features.TREE, config.process))
+            Writer(List.empty, Features.TREE.configure(if (context.onlyUpdate) config else config.process))
     }
 
     def getSaplingProviderErrorList: List[ElementError] =

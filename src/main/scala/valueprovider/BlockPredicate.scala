@@ -9,7 +9,7 @@ import de.martenschaefer.data.util.Identifier
 import util.{ BlockPos, BlockState }
 
 trait BlockPredicate {
-    val predicateType: BlockPredicateType[_]
+    def predicateType: BlockPredicateType[_]
 
     def process: BlockPredicate = this
 }
@@ -102,38 +102,62 @@ object WouldSurviveBlockPredicate {
 case class AnyOfBlockPredicate(val predicates: List[BlockPredicate]) extends BlockPredicate derives Codec {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.ANY_OF
 
-    override def process: BlockPredicate = this.predicates match {
+    override def process: BlockPredicate = this.predicates.map(_.process) match {
         case predicate :: Nil => predicate.process
-        case _ if this.predicates.contains(TrueBlockPredicate) => TrueBlockPredicate.process
+        case Nil => NotBlockPredicate(TrueBlockPredicate).process
+        case predicates if predicates.contains(TrueBlockPredicate) => TrueBlockPredicate.process
+        case predicates if predicates.exists(_ match {
+            case AnyOfBlockPredicate(_) => true
+            case NotBlockPredicate(AllOfBlockPredicate(_)) => true
+            case _ => false
+        }) =>
+            AnyOfBlockPredicate(predicates.flatMap(_ match {
+                case AnyOfBlockPredicate(predicates) => predicates
+                case NotBlockPredicate(AllOfBlockPredicate(predicates)) =>
+                    predicates.map(NotBlockPredicate(_)).map(_.process)
+                case other => List(other)
+            })).process
 
-        case _ => AnyOfBlockPredicate(this.predicates.map(_.process))
+        case predicates => AnyOfBlockPredicate(predicates)
     }
 }
 
 case class AllOfBlockPredicate(val predicates: List[BlockPredicate]) extends BlockPredicate derives Codec {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.ALL_OF
 
-    override def process: BlockPredicate = this.predicates match {
+    override def process: BlockPredicate = this.predicates.map(_.process) match {
         case predicate :: Nil => predicate.process
-        case _ if this.predicates.contains(TrueBlockPredicate) => AllOfBlockPredicate(this.predicates
+        case Nil => TrueBlockPredicate
+        case predicates if predicates.contains(TrueBlockPredicate) => AllOfBlockPredicate(predicates
             .filter(_ != TrueBlockPredicate)).process
+        case predicates if predicates.exists(_ match {
+            case AllOfBlockPredicate(_) => true
+            case NotBlockPredicate(AnyOfBlockPredicate(_)) => true
+            case _ => false
+        }) =>
+            AllOfBlockPredicate(predicates.flatMap(_ match {
+                case AllOfBlockPredicate(predicates) => predicates
+                case NotBlockPredicate(AnyOfBlockPredicate(predicates)) =>
+                    predicates.map(NotBlockPredicate(_)).map(_.process)
+                case other => List(other)
+            })).process
 
-        case _ => AllOfBlockPredicate(this.predicates.map(_.process))
+        case predicates => AllOfBlockPredicate(predicates)
     }
 }
 
 case class NotBlockPredicate(val predicate: BlockPredicate) extends BlockPredicate derives Codec {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.NOT
 
-    override def process: BlockPredicate = this.predicate match {
+    override def process: BlockPredicate = this.predicate.process match {
         case NotBlockPredicate(predicate) => predicate.process
 
-        case _ => NotBlockPredicate(this.predicate.process)
+        case predicate => NotBlockPredicate(predicate)
     }
 }
 
 case object TrueBlockPredicate extends BlockPredicate {
-    override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.TRUE
+    override def predicateType: BlockPredicateType[_] = BlockPredicateTypes.TRUE
 
     given Codec[TrueBlockPredicate.type] = Codec.unit(TrueBlockPredicate)
 }

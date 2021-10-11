@@ -1,5 +1,6 @@
 package de.martenschaefer.minecraft.worldgenupdater
 
+import java.io.IOException
 import java.nio.file.{ Files, LinkOption, Path, Paths }
 import java.util.Scanner
 import scala.jdk.CollectionConverters.IterableHasAsScala
@@ -125,28 +126,64 @@ object FeatureUpdater {
                               processor: T => ProcessResult[T],
                               getPostProcessWarnings: T => List[ElementError])(using flags: Flags): FileProcessResult = {
         var lifecycle = Lifecycle.Stable
+        var foundWarnings = false
+        var warnings: List[ElementError] = List.empty
 
-        val originString = read(originFile)
-        val originFeature: T = Codec[T].decode(originString) match {
-            case Success(feature, l) => lifecycle += l
-                feature
-            case Failure(errors, _) => return FileProcessResult.Errors(errors.toList)
+        val originString: String = try {
+            read(originFile)
+        } catch {
+            case e: IOException => {
+                warnings ::= ValidationError(_ => s"IO Exception thrown during read: ${e.getLocalizedMessage}", List.empty)
+                return FileProcessResult.Errors(warnings)
+            }
+
+            case e: Exception => {
+                warnings ::= ValidationError(_ => s"Exception thrown during read: ${e.getLocalizedMessage}", List.empty)
+                return FileProcessResult.Errors(warnings)
+            }
         }
 
-        val targetFeatureWriter: ProcessResult[T] = processor(originFeature)
-        var warnings: List[ElementError] = targetFeatureWriter.written
-        val targetFeature: T = targetFeatureWriter.value
-        warnings = warnings ::: getPostProcessWarnings(targetFeature)
+        val originFeature: T = try {
+            Codec[T].decode(originString) match {
+                case Success(feature, l) => lifecycle += l
+                    feature
+                case Failure(errors, _) => return FileProcessResult.Errors(errors.toList)
+            }
+        } catch {
+            case e: Exception => {
+                warnings ::= ValidationError(_ => s"Exception thrown during decoding: ${e.getLocalizedMessage}", List.empty)
+                return FileProcessResult.Errors(warnings)
+            }
+        }
 
-        var foundWarnings = false
+        val targetFeature: T = try {
+            val targetFeatureWriter: ProcessResult[T] = processor(originFeature)
+            warnings = targetFeatureWriter.written
+            val targetFeature: T = targetFeatureWriter.value
+            warnings = warnings ::: getPostProcessWarnings(targetFeature)
+
+            targetFeature
+        } catch {
+            case e: Exception => {
+                warnings ::= ValidationError(_ => s"Exception thrown during processing: ${e.getLocalizedMessage}", List.empty)
+                return FileProcessResult.Errors(warnings)
+            }
+        }
 
         if (!warnings.isEmpty) foundWarnings = true
 
-        val targetFeatureString: String = Codec[T].encode(targetFeature)(using JsonCodecs.prettyJsonEncoder) match {
-            case Success(json, l) => lifecycle += l
-                json
-            case Failure(errors, _) => {
-                return FileProcessResult.Errors(errors.toList)
+        val targetFeatureString: String = try {
+            Codec[T].encode(targetFeature)(using JsonCodecs.prettyJsonEncoder) match {
+                case Success(json, l) => lifecycle += l
+                    json
+                case Failure(errors, _) => {
+                    return FileProcessResult.Errors(errors.toList)
+                }
+            }
+        } catch {
+            case e: Exception => {
+                warnings ::= ValidationError(_ => s"Exception thrown during encoding: ${e.getLocalizedMessage}", List.empty)
+                return FileProcessResult.Errors(warnings)
             }
         }
 
@@ -160,7 +197,19 @@ object FeatureUpdater {
             case _ =>
         }
 
-        write(targetFile, targetFeatureString)
+        try {
+            write(targetFile, targetFeatureString)
+        } catch {
+            case e: IOException => {
+                warnings ::= ValidationError(_ => s"IO Exception thrown during write: ${e.getLocalizedMessage}", List.empty)
+                return FileProcessResult.Errors(warnings)
+            }
+
+            case e: Exception => {
+                warnings ::= ValidationError(_ => s"Exception thrown during write: ${e.getLocalizedMessage}", List.empty)
+                return FileProcessResult.Errors(warnings)
+            }
+        }
 
         return if (foundWarnings) FileProcessResult.Warnings(warnings) else FileProcessResult.Normal
     }

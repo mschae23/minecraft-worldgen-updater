@@ -9,7 +9,7 @@ import de.martenschaefer.data.util.Identifier
 import util.BlockPos
 
 trait BlockPlacer {
-    val placerType: BlockPlacerType[_]
+    def placerType: BlockPlacerType[_]
 }
 
 object BlockPlacer {
@@ -38,13 +38,13 @@ object BlockPlacerTypes {
 }
 
 case object SimpleBlockPlacer extends BlockPlacer {
-    override val placerType: BlockPlacerType[_] = BlockPlacerTypes.SIMPLE_BLOCK_PLACER
+    override def placerType: BlockPlacerType[_] = BlockPlacerTypes.SIMPLE_BLOCK_PLACER
 
     given Codec[SimpleBlockPlacer.type] = Codec.unit(SimpleBlockPlacer)
 }
 
 case object DoublePlantPlacer extends BlockPlacer {
-    override val placerType: BlockPlacerType[_] = BlockPlacerTypes.SIMPLE_BLOCK_PLACER
+    override def placerType: BlockPlacerType[_] = BlockPlacerTypes.SIMPLE_BLOCK_PLACER
 
     given Codec[DoublePlantPlacer.type] = Codec.unit(DoublePlantPlacer)
 }

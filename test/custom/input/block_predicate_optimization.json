@@ -1,0 +1,46 @@
+{
+  "config": {
+    "feature": {
+      "config": {
+      },
+      "type": "minecraft:no_op"
+    },
+    "decorator": {
+      "config": {
+        "predicate": {
+          "type": "minecraft:all_of",
+          "predicates": [
+            {
+              "type": "minecraft:replaceable"
+            },
+            {
+              "type": "minecraft:replaceable"
+            },
+            {
+              "type": "not",
+              "predicate": {
+                "predicates": [
+                  {
+                    "type": "minecraft:replaceable"
+                  },
+                  {
+                    "type": "minecraft:replaceable"
+                  },
+                  {
+                    "type": "not",
+                    "predicate": {
+                      "type": "minecraft:replaceable"
+                    }
+                  }
+                ],
+                "type": "any_of"
+              }
+            }
+          ]
+        }
+      },
+      "type": "minecraft:block_filter"
+    }
+  },
+  "type": "decorated"
+}

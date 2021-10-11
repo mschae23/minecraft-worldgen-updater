@@ -5,10 +5,9 @@ import de.martenschaefer.data.serialization.{ Codec, ValidationError }
 import decorator.Decorators
 import decorator.definition.{ BlockFilterDecorator, BlockFilterDecoratorConfig }
 import valueprovider.{ AllOfBlockPredicate, BlockPredicate, TrueBlockPredicate }
-// import feature.definition.RandomPatchFeatureConfig.Current
+import cats.data.Writer
 import feature.{ Feature, FeatureProcessResult, Features }
 import util.*
-import cats.data.Writer
 
 case object RandomPatchFeature extends Feature(Codec[RandomPatchFeatureConfig]) {
     override def process(config: RandomPatchFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {
@@ -24,6 +23,9 @@ case object RandomPatchFeature extends Feature(Codec[RandomPatchFeatureConfig]) 
                             BlockPredicate.MATCHING_AIR else BlockPredicate.MATCHING_AIR_OR_WATER
                     } else TrueBlockPredicate)).process))), context)
         } else
-            super.process(config, context)
+            config.feature.feature.process(config.feature.config, context)
+                .mapWritten(_.map(_.withPrependedPath("feature").withPrependedPath("config"))).map(feature =>
+                this.configure(RandomPatchFeatureConfig(config.tries, config.spreadXz, config.spreadY,
+                    feature)))
     }
 }
