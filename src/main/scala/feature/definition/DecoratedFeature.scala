@@ -21,6 +21,8 @@ case object DecoratedFeature extends Feature(Codec[DecoratedFeatureConfig]) {
                 config.decorator match {
                     case ConfiguredDecorator(Decorators.SQUARE, _) =>
                         loop(warnings.withHorizontalDecorator(config.decorator), config.feature)
+                    case ConfiguredDecorator(Decorators.ICEBERG, _) =>
+                        loop(warnings.withHorizontalDecorator(config.decorator), config.feature)
                     case _ => loop(warnings, config.feature)
                 }
             case _ => warnings

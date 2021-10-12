@@ -1,6 +1,7 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package util
 
+import de.martenschaefer.data.Result
 import de.martenschaefer.data.serialization.{ Codec, EitherError, ValidationError }
 import de.martenschaefer.data.util.DataResult.*
 
@@ -11,6 +12,14 @@ enum Direction(val name: String) {
     case South extends Direction("south")
     case West extends Direction("west")
     case East extends Direction("east")
+
+    def isVertical: Boolean = this match {
+        case Down => true
+        case Up => true
+        case _ => false
+    }
+
+    def isHorizontal: Boolean = !this.isVertical
 }
 
 object Direction {
@@ -27,4 +36,17 @@ object Direction {
 
         case _ => Failure(List(ValidationError(path => path, List.empty)))
     })(direction => Success(direction.name))
+}
+
+type VerticalDirection = Direction
+
+object VerticalDirection {
+    given Codec[VerticalDirection] = Codec[Direction].flatXmap(validateVertical)(validateVertical)
+
+    import de.martenschaefer.data.util.DataResult.*
+
+    def validateVertical(direction: Direction): Result[Direction] =
+        if (direction.isVertical) Success(direction)
+        else Failure(List(ValidationError(path =>
+            s"$path: Direction is not vertical: ${direction.name}", List.empty)))
 }

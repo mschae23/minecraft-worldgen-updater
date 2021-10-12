@@ -1,0 +1,62 @@
+{
+  "config": {
+    "feature": {
+      "config": {
+        "feature": {
+          "config": {
+            "feature": {
+              "config": {},
+              "type": "no_op"
+            },
+            "decorator": {
+              "config": {
+                "predicate": {
+                  "type": "minecraft:replaceable"
+                }
+              },
+              "type": "block_filter"
+            }
+          },
+          "type": "minecraft:decorated"
+        },
+        "decorator": {
+          "config": {
+            "outer": {
+              "config": {
+                "predicate": {
+                  "type": "minecraft:true"
+                }
+              },
+              "type": "minecraft:block_filter"
+            },
+            "inner": {
+              "config": {
+                "height": 64
+              },
+              "type": "minecraft:range"
+            }
+          },
+          "type": "minecraft:decorated"
+        }
+      },
+      "type": "minecraft:decorated"
+    },
+    "decorator": {
+      "config": {
+        "outer": {
+          "config": {
+            "count": 5
+          },
+          "type": "minecraft:count"
+        },
+        "inner": {
+          "config": {
+          },
+          "type": "minecraft:square"
+        }
+      },
+      "type": "minecraft:decorated"
+    }
+  },
+  "type": "minecraft:decorated"
+}

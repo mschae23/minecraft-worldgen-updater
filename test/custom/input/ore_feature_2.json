@@ -31,7 +31,7 @@
       {
         "config": {
         },
-        "type": "square"
+        "type": "iceberg"
       }
     ]
   },

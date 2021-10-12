@@ -57,15 +57,15 @@
         },
         "decorator": {
           "config": {
-            "inner": {
-              "type": "minecraft:heightmap",
-              "config": {
-                "heightmap": "MOTION_BLOCKING"
-              }
-            },
             "outer": {
               "config": {},
               "type": "minecraft:square"
+            },
+            "inner": {
+              "config": {
+                "heightmap": "MOTION_BLOCKING"
+              },
+              "type": "minecraft:heightmap"
             }
           },
           "type": "minecraft:decorated"
