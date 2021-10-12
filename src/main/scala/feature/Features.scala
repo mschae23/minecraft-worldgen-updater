@@ -8,7 +8,7 @@ import definition._
 
 object Features {
     val NO_OP = register("no_op", new Feature(Codec[DefaultFeatureConfig]))
-    val SIMPLE_BLOCK = register("simple_block", new Feature(Codec[SimpleBlockFeatureConfig]))
+    val SIMPLE_BLOCK = register("simple_block", SimpleBlockFeature)
     val TREE = register("tree", TreeFeature)
     val ORE = register("ore", OreFeature)
     val NO_SURFACE_ORE = register("no_surface_ore", NoSurfaceOreFeature)
