@@ -4,7 +4,7 @@ package decorator.definition
 import cats.data.Writer
 import de.martenschaefer.data.serialization.{ Codec, ElementNode, ValidationError }
 import decorator.definition.BlockFilterDecoratorConfig.Old1
-import decorator.{ Decorator, Decorators }
+import decorator.{ ConfiguredDecorator, Decorator, Decorators }
 import feature.definition.DecoratedFeatureConfig
 import feature.{ ConfiguredFeature, FeatureProcessResult, Features }
 import valueprovider.{ AllOfBlockPredicate, BlockPredicate, MatchingBlocksBlockPredicate, NotBlockPredicate, TrueBlockPredicate }
@@ -17,19 +17,29 @@ case object BlockFilterDecorator extends Decorator(Codec[BlockFilterDecoratorCon
         else if (!context.onlyUpdate)
             config.predicate.process match {
                 case TrueBlockPredicate => Writer(List.empty, feature)
-                case NotBlockPredicate(TrueBlockPredicate) => Writer(List(
-                    ValidationError(path => s"$path: Block filter uses not(true) predicate; "
+                case NotBlockPredicate(TrueBlockPredicate) => mergeBlockFilter(feature, NotBlockPredicate(TrueBlockPredicate))
+                    .mapWritten(ValidationError(path => s"$path: Block filter uses not(true) predicate; "
                         + "the decorated feature will never generate", List(ElementNode.Name("config"),
-                        ElementNode.Name("predicate")))), Features.DECORATED.configure(
-                    DecoratedFeatureConfig(feature, this.configure(config))))
+                        ElementNode.Name("predicate"))) :: _)
 
-                case predicate => Writer(List.empty, Features.DECORATED.configure(
-                    DecoratedFeatureConfig(feature, this.configure(
-                        BlockFilterDecoratorConfig(predicate)))))
+                case predicate => mergeBlockFilter(feature, predicate)
             }
         else
             super.process(config, feature, context)
     }
+
+    def mergeBlockFilter(feature: ConfiguredFeature[_, _], predicate: BlockPredicate): FeatureProcessResult =
+        feature match {
+            case ConfiguredFeature(Features.DECORATED, DecoratedFeatureConfig(
+            innerFeature, ConfiguredDecorator(Decorators.BLOCK_FILTER,
+            BlockFilterDecoratorConfig(predicate2, _)))) =>
+                Writer(List.empty, Features.DECORATED.configure(
+                    DecoratedFeatureConfig(innerFeature, this.configure(
+                        BlockFilterDecoratorConfig(AllOfBlockPredicate(List(predicate, predicate2)).process)))))
+            case _ => Writer(List.empty, Features.DECORATED.configure(
+                DecoratedFeatureConfig(feature, this.configure(
+                    BlockFilterDecoratorConfig(predicate)))))
+        }
 
     def updateOld1(old1: Old1): BlockPredicate = {
         if (old1.allowed.isEmpty && old1.disallowed.isEmpty)

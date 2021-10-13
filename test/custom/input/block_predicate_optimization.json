@@ -2,8 +2,26 @@
   "config": {
     "feature": {
       "config": {
+        "feature": {
+          "config": {},
+          "type": "no_op"
+        },
+        "decorator": {
+          "config": {
+            "predicate": {
+              "blocks": [
+                "minecraft:grass_block"
+              ],
+              "offset": [
+                0, -1, 0
+              ],
+              "type": "minecraft:matching_blocks"
+            }
+          },
+          "type": "minecraft:block_filter"
+        }
       },
-      "type": "minecraft:no_op"
+      "type": "minecraft:decorated"
     },
     "decorator": {
       "config": {
@@ -15,26 +33,6 @@
             },
             {
               "type": "minecraft:replaceable"
-            },
-            {
-              "type": "not",
-              "predicate": {
-                "predicates": [
-                  {
-                    "type": "minecraft:replaceable"
-                  },
-                  {
-                    "type": "minecraft:replaceable"
-                  },
-                  {
-                    "type": "not",
-                    "predicate": {
-                      "type": "minecraft:replaceable"
-                    }
-                  }
-                ],
-                "type": "any_of"
-              }
             }
           ]
         }

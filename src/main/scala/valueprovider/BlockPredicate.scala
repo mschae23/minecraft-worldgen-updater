@@ -1,12 +1,13 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package valueprovider
 
+import java.util.Objects
 import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
 import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.data.util.Identifier
-import util.{ BlockPos, BlockState }
+import util.*
 
 trait BlockPredicate {
     def predicateType: BlockPredicateType[_]
@@ -22,6 +23,17 @@ object BlockPredicate {
     val MATCHING_AIR = MatchingBlocksBlockPredicate(List(Identifier("minecraft", "air")), BlockPos.ORIGIN)
     val MATCHING_AIR_OR_WATER = MatchingBlocksBlockPredicate(List(Identifier("minecraft", "air"),
         Identifier("minecraft", "water")), BlockPos.ORIGIN)
+
+    def hasTruePredicate(predicates: List[BlockPredicate]): Boolean =
+        predicates.contains(TrueBlockPredicate) || predicates.uniquePairs.exists(isAlwaysTruePair)
+
+    def isAlwaysTruePair(a: BlockPredicate, b: BlockPredicate): Boolean = a match {
+        case NotBlockPredicate(predicateA) => b == predicateA
+        case _ => b match {
+            case NotBlockPredicate(predicateB) => a == predicateB
+            case _ => false
+        }
+    }
 }
 
 case class BlockPredicateType[P <: BlockPredicate](val codec: Codec[P])
@@ -39,11 +51,19 @@ object BlockPredicateTypes {
     val ALL_OF = register("all_of", Codec[AllOfBlockPredicate])
     val NOT = register("not", Codec[NotBlockPredicate])
     val TRUE = register("true", Codec[TrueBlockPredicate.type])
+    val FALSE = registerCustom("false", Codec[FalseBlockPredicate.type])
 
     private def register[P <: BlockPredicate](name: String, codec: Codec[P]): BlockPredicateType[P] = {
         val predicateType = BlockPredicateType(codec)
 
         predicateType.register(Identifier("minecraft", name))
+        predicateType
+    }
+
+    private def registerCustom[P <: BlockPredicate](name: String, codec: Codec[P]): BlockPredicateType[P] = {
+        val predicateType = BlockPredicateType(codec)
+
+        predicateType.register(Identifier(UpdaterMain.NAMESPACE, name))
         predicateType
     }
 }
@@ -102,19 +122,21 @@ object WouldSurviveBlockPredicate {
 case class AnyOfBlockPredicate(val predicates: List[BlockPredicate]) extends BlockPredicate derives Codec {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.ANY_OF
 
-    override def process: BlockPredicate = this.predicates.map(_.process) match {
+    override def process: BlockPredicate = this.predicates.map(_.process).distinct match {
         case predicate :: Nil => predicate.process
         case Nil => NotBlockPredicate(TrueBlockPredicate).process
-        case predicates if predicates.contains(TrueBlockPredicate) => TrueBlockPredicate.process
+        case predicates if BlockPredicate.hasTruePredicate(predicates) => TrueBlockPredicate.process
         case predicates if predicates.exists(_ match {
             case AnyOfBlockPredicate(_) => true
             case NotBlockPredicate(AllOfBlockPredicate(_)) => true
+            case FalseBlockPredicate => true
             case _ => false
         }) =>
             AnyOfBlockPredicate(predicates.flatMap(_ match {
                 case AnyOfBlockPredicate(predicates) => predicates
                 case NotBlockPredicate(AllOfBlockPredicate(predicates)) =>
                     predicates.map(NotBlockPredicate(_)).map(_.process)
+                case FalseBlockPredicate => List.empty
                 case other => List(other)
             })).process
 
@@ -125,11 +147,13 @@ case class AnyOfBlockPredicate(val predicates: List[BlockPredicate]) extends Blo
 case class AllOfBlockPredicate(val predicates: List[BlockPredicate]) extends BlockPredicate derives Codec {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.ALL_OF
 
-    override def process: BlockPredicate = this.predicates.map(_.process) match {
+    override def process: BlockPredicate = this.predicates.map(_.process).distinct match {
         case predicate :: Nil => predicate.process
         case Nil => TrueBlockPredicate
         case predicates if predicates.contains(TrueBlockPredicate) => AllOfBlockPredicate(predicates
             .filter(_ != TrueBlockPredicate)).process
+        case predicates if predicates.contains(NotBlockPredicate(TrueBlockPredicate)) =>
+            FalseBlockPredicate.process
         case predicates if predicates.exists(_ match {
             case AllOfBlockPredicate(_) => true
             case NotBlockPredicate(AnyOfBlockPredicate(_)) => true
@@ -141,6 +165,8 @@ case class AllOfBlockPredicate(val predicates: List[BlockPredicate]) extends Blo
                     predicates.map(NotBlockPredicate(_)).map(_.process)
                 case other => List(other)
             })).process
+        case predicates if BlockPredicate.hasTruePredicate(predicates) =>
+            FalseBlockPredicate.process
 
         case predicates => AllOfBlockPredicate(predicates)
     }
@@ -160,4 +186,17 @@ case object TrueBlockPredicate extends BlockPredicate {
     override def predicateType: BlockPredicateType[_] = BlockPredicateTypes.TRUE
 
     given Codec[TrueBlockPredicate.type] = Codec.unit(TrueBlockPredicate)
+}
+
+case object FalseBlockPredicate extends BlockPredicate {
+    override def predicateType: BlockPredicateType[_] = BlockPredicateTypes.FALSE
+
+    given Codec[FalseBlockPredicate.type] = Codec.unit(FalseBlockPredicate)
+
+    override def process: BlockPredicate = NotBlockPredicate(TrueBlockPredicate).process
+
+    override def equals(o: Any): Boolean = Objects.equals(this, o)
+        || NotBlockPredicate(TrueBlockPredicate) == o
+
+    def unapply(predicate: BlockPredicate): Boolean = equals(predicate)
 }

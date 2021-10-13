@@ -14,6 +14,14 @@ extension [T](self: T) {
     }
 }
 
+extension [T](self: List[T]) {
+    def uniquePairs: List[(T, T)] = for {
+        (x, idxX) <- self.zipWithIndex
+        (y, idxY) <- self.zipWithIndex
+        if idxX < idxY
+    } yield (x, y)
+}
+
 def colored(text: String, color: String)(using flags: Map[Flag, Boolean]): String = {
     if (!flags(Flag.Colored))
         text

@@ -17,42 +17,15 @@
               "type": "minecraft:replaceable"
             },
             {
+              "blocks": [
+                "minecraft:grass_block"
+              ],
               "offset": [
                 0,
-                0,
+                -1,
                 0
               ],
-              "type": "minecraft:replaceable"
-            },
-            {
-              "predicate": {
-                "offset": [
-                  0,
-                  0,
-                  0
-                ],
-                "type": "minecraft:replaceable"
-              },
-              "type": "minecraft:not"
-            },
-            {
-              "predicate": {
-                "offset": [
-                  0,
-                  0,
-                  0
-                ],
-                "type": "minecraft:replaceable"
-              },
-              "type": "minecraft:not"
-            },
-            {
-              "offset": [
-                0,
-                0,
-                0
-              ],
-              "type": "minecraft:replaceable"
+              "type": "minecraft:matching_blocks"
             }
           ],
           "type": "minecraft:all_of"
