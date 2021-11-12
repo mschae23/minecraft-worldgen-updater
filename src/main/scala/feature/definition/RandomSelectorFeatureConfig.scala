@@ -2,12 +2,13 @@ package de.martenschaefer.minecraft.worldgenupdater
 package feature.definition
 
 import de.martenschaefer.data.serialization.Codec
+import feature.definition.RandomSelectorFeatureConfig.RandomSelectorFeatureEntry
+import feature.placement.PlacedFeature
 import feature.{ ConfiguredFeature, FeatureConfig }
-import de.martenschaefer.minecraft.worldgenupdater.feature.definition.RandomSelectorFeatureConfig.RandomSelectorFeatureEntry
 
-case class RandomSelectorFeatureConfig(val features: List[RandomSelectorFeatureEntry],
-                                       val default: ConfiguredFeature[_, _]) extends FeatureConfig derives Codec
+case class RandomSelectorFeatureConfig(features: List[RandomSelectorFeatureEntry],
+                                       default: PlacedFeature) extends FeatureConfig derives Codec
 
 object RandomSelectorFeatureConfig {
-    case class RandomSelectorFeatureEntry(val feature: ConfiguredFeature[_, _], val chance: Float) derives Codec
+    case class RandomSelectorFeatureEntry(feature: PlacedFeature, chance: Float) derives Codec
 }

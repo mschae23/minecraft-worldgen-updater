@@ -1,58 +1,36 @@
 {
-  "config": {
-    "feature": {
-      "config": {
-        "feature": {
-          "config": {
-            "feature": {
-              "config": {
-                "feature": {
-                  "config": {
-                    "targets": [
-                      {
-                        "target": {
-                          "predicate_type": "minecraft:always_true"
-                        },
-                        "state": {
-                          "Name": "minecraft:iron_ore",
-                          "Properties": {}
-                        }
-                      }
-                    ],
-                    "size": 51,
-                    "discard_chance_on_air_exposure": 0.0
-                  },
-                  "type": "minecraft:ore"
-                },
-                "decorator": {
-                  "config": {},
-                  "type": "minecraft:iceberg"
-                }
-              },
-              "type": "minecraft:decorated"
-            },
-            "decorator": {
-              "config": {
-                "heightmap": "MOTION_BLOCKING"
-              },
-              "type": "minecraft:heightmap"
-            }
+  "feature": {
+    "config": {
+      "targets": [
+        {
+          "target": {
+            "predicate_type": "minecraft:always_true"
           },
-          "type": "minecraft:decorated"
-        },
-        "decorator": {
-          "config": {},
-          "type": "minecraft:square"
+          "state": {
+            "Name": "minecraft:iron_ore",
+            "Properties": {}
+          }
         }
-      },
-      "type": "minecraft:decorated"
+      ],
+      "size": 51,
+      "discard_chance_on_air_exposure": 0.0
     },
-    "decorator": {
-      "config": {
-        "count": 5
-      },
+    "type": "minecraft:ore"
+  },
+  "placement": [
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "heightmap": "MOTION_BLOCKING",
+      "type": "minecraft:heightmap"
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "count": 5,
       "type": "minecraft:count"
     }
-  },
-  "type": "minecraft:decorated"
+  ]
 }

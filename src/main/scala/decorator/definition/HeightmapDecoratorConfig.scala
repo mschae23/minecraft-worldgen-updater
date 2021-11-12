@@ -6,7 +6,7 @@ import de.martenschaefer.data.util._
 import decorator.{ DecoratorConfig, DefaultDecoratorConfig }
 import util.HeightmapType
 
-case class HeightmapDecoratorConfig(val heightmap: HeightmapType) extends DecoratorConfig
+case class HeightmapDecoratorConfig(heightmap: HeightmapType) extends DecoratorConfig
 
 object HeightmapDecoratorConfig {
     val old1Codec =

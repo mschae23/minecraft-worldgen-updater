@@ -1,38 +1,35 @@
 {
-  "config": {
-    "feature": {
-      "config": {},
-      "type": "minecraft:no_op"
-    },
-    "decorator": {
-      "config": {
-        "predicate": {
-          "predicates": [
-            {
-              "offset": [
-                0,
-                0,
-                0
-              ],
-              "type": "minecraft:replaceable"
-            },
-            {
-              "blocks": [
-                "minecraft:grass_block"
-              ],
-              "offset": [
-                0,
-                -1,
-                0
-              ],
-              "type": "minecraft:matching_blocks"
-            }
-          ],
-          "type": "minecraft:all_of"
-        }
-      },
-      "type": "minecraft:block_filter"
-    }
+  "feature": {
+    "config": {},
+    "type": "minecraft:no_op"
   },
-  "type": "minecraft:decorated"
+  "placement": [
+    {
+      "predicate": {
+        "predicates": [
+          {
+            "blocks": [
+              "minecraft:grass_block"
+            ],
+            "offset": [
+              0,
+              -1,
+              0
+            ],
+            "type": "minecraft:matching_blocks"
+          },
+          {
+            "offset": [
+              0,
+              0,
+              0
+            ],
+            "type": "minecraft:replaceable"
+          }
+        ],
+        "type": "minecraft:all_of"
+      },
+      "type": "minecraft:block_predicate_filter"
+    }
+  ]
 }

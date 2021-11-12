@@ -25,12 +25,12 @@ object FeatureUpdater {
                 val input = scanner.nextLine()
 
                 if (!"y".equalsIgnoreCase(input)) {
-                    if (!"n".equalsIgnoreCase(input) && !input.isEmpty) {
+                    if (!"n".equalsIgnoreCase(input) && input.nonEmpty) {
                         println("Write either \"y\" for yes or \"n\" for no.")
                     }
 
                     println(colored("Aborting.", Console.YELLOW))
-                    return;
+                    return
                 }
             }
         }
@@ -88,7 +88,7 @@ object FeatureUpdater {
             for (path <- directoryStream.asScala) {
                 if (Flag.Recursive.get && Files.isDirectory(path)) {
                     processDirectory(path, targetDirectory.resolve(path.getFileName), startingDirectory,
-                        processor, getPostProcessWarnings, fileNameRegex, true) match {
+                        processor, getPostProcessWarnings, fileNameRegex, recursive = true) match {
                         case WarningType.Error => foundErrors = true
                         case WarningType.Warning => foundWarnings = true
                         case _ =>
@@ -117,7 +117,7 @@ object FeatureUpdater {
             }
         }
 
-        return if (foundErrors) WarningType.Error
+        if (foundErrors) WarningType.Error
         else if (foundWarnings) WarningType.Warning
         else WarningType.Okay
     }
@@ -170,7 +170,7 @@ object FeatureUpdater {
             }
         }
 
-        if (!warnings.isEmpty) foundWarnings = true
+        if (warnings.nonEmpty) foundWarnings = true
 
         val targetFeatureString: String = try {
             Codec[T].encode(targetFeature)(using JsonCodecs.prettyJsonEncoder) match {
@@ -211,7 +211,7 @@ object FeatureUpdater {
             }
         }
 
-        return if (foundWarnings) FileProcessResult.Warnings(warnings) else FileProcessResult.Normal
+        if (foundWarnings) FileProcessResult.Warnings(warnings) else FileProcessResult.Normal
     }
 
     def printWarnings(warningType: WarningType, warnings: List[ElementError], indent: Int = 0)(using flags: Flags): Unit = {
@@ -241,22 +241,13 @@ object FeatureUpdater {
                     + ": " + (if (reducedDebugInfo) "<reduced debug info>" else colored(parseError.element.toString, DIMMED))
             }
 
-            case AlternativeError(errors, path) => {
-                println(indentation + "- " + "Multiple alternatives failed:")
-
-                for (i <- 0 until errors.length) {
-                    val alternative = errors(i)
-
-                    println(indentation + s"  - Alternative ${i + 1}:")
-                    printWarnings(warningType, alternative, indent + 2)
-                }
-
-                return;
-            }
-
             case _ => warning.toString
         }
 
         println(indentation + "- " + warningString)
+
+        for (subError <- warning.getSubErrors) {
+            printWarning(warningType, subError, indent + 1)
+        }
     }
 }

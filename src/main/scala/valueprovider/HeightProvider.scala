@@ -17,22 +17,22 @@ trait HeightProvider {
 
 object HeightProvider {
     private val offsetHeightProviderCodec: Codec[HeightProvider] = Codec[YOffset].flatXmap(offset =>
-        Success(ConstantHeightProvider(offset)))(_ match {
+        Success(ConstantHeightProvider(offset))) {
         case ConstantHeightProvider(offset) => Success(offset)
         case _ => Failure(List(ValidationError(path => s"$path: Not a constant height provider", List.empty)))
-    })
+    }
 
     private val intHeightProviderCodec: Codec[HeightProvider] = Codec[Int].flatXmap(value =>
-        Success(ConstantHeightProvider(YOffset.Fixed(value))))(_ match {
+        Success(ConstantHeightProvider(YOffset.Fixed(value)))) {
         case ConstantHeightProvider(YOffset.Fixed(value)) => Success(value)
         case _ => Failure(List(ValidationError(path => s"$path: Not a constant height provider with an absolute Y value", List.empty)))
-    })
+    }
 
     given Codec[HeightProvider] = Codec.alternatives(List(offsetHeightProviderCodec, intHeightProviderCodec,
         Registry[HeightProviderType[_]].dispatch[HeightProvider](_.providerType, _.codec)))
 }
 
-case class HeightProviderType[P <: HeightProvider](val codec: Codec[P])
+case class HeightProviderType[P <: HeightProvider](codec: Codec[P])
 
 object HeightProviderType {
     given Registry[HeightProviderType[_]] = new SimpleRegistry(Identifier("minecraft", "height_provider_type"))
@@ -51,11 +51,11 @@ object HeightProviderType {
     }
 }
 
-case class ConstantHeightProvider(val value: YOffset) extends HeightProvider derives Codec {
+case class ConstantHeightProvider(value: YOffset) extends HeightProvider derives Codec {
     override val providerType: HeightProviderType[_] = HeightProviderType.CONSTANT
 }
 
-case class UniformHeightProvider(val minInclusive: YOffset, val maxInclusive: YOffset) extends HeightProvider derives Codec {
+case class UniformHeightProvider(minInclusive: YOffset, maxInclusive: YOffset) extends HeightProvider derives Codec {
     override val providerType: HeightProviderType[_] = HeightProviderType.UNIFORM
 
     override val process: HeightProvider =
@@ -63,7 +63,7 @@ case class UniformHeightProvider(val minInclusive: YOffset, val maxInclusive: YO
         else this
 }
 
-case class BiasedToBottomHeightProvider(val minInclusive: YOffset, val maxInclusive: YOffset, val inner: Int = 1) extends HeightProvider {
+case class BiasedToBottomHeightProvider(minInclusive: YOffset, maxInclusive: YOffset, inner: Int = 1) extends HeightProvider {
     override val providerType: HeightProviderType[_] = HeightProviderType.BIASED_TO_BOTTOM
 }
 
@@ -77,7 +77,7 @@ object BiasedToBottomHeightProvider {
     }
 }
 
-case class VeryBiasedToBottomHeightProvider(val minInclusive: YOffset, val maxInclusive: YOffset, val inner: Int = 1) extends HeightProvider {
+case class VeryBiasedToBottomHeightProvider(minInclusive: YOffset, maxInclusive: YOffset, inner: Int = 1) extends HeightProvider {
     override val providerType: HeightProviderType[_] = HeightProviderType.VERY_BIASED_TO_BOTTOM
 }
 
@@ -91,7 +91,7 @@ object VeryBiasedToBottomHeightProvider {
     }
 }
 
-case class TrapezoidHeightProvider(val minInclusive: YOffset, val maxInclusive: YOffset, val plateau: Int = 0) extends HeightProvider {
+case class TrapezoidHeightProvider(minInclusive: YOffset, maxInclusive: YOffset, plateau: Int = 0) extends HeightProvider {
     override val providerType: HeightProviderType[_] = HeightProviderType.TRAPEZOID
 }
 

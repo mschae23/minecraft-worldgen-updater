@@ -18,7 +18,7 @@ enum HeightmapPurpose {
 }
 
 object HeightmapType {
-    given Codec[HeightmapType] = Codec[String].flatXmap(name => name match {
+    given Codec[HeightmapType] = Codec[String].flatXmap {
         case "WORLD_SURFACE_WG" => Success(WorldSurfaceWg)
         case "WORLD_SURFACE" => Success(WorldSurface)
         case "OCEAN_FLOOR_WG" => Success(OceanFloorWg)
@@ -26,12 +26,12 @@ object HeightmapType {
         case "MOTION_BLOCKING" => Success(MotionBlocking)
         case "MOTION_BLOCKING_NO_LEAVES" => Success(MotionBlockingNoLeaves)
         case _ => Failure(List(ValidationError(path => s"$path is not a valid heightmap", List.empty)))
-    })(_ match {
+    } {
         case WorldSurfaceWg => Success(WorldSurfaceWg.name)
         case WorldSurface => Success(WorldSurface.name)
         case OceanFloorWg => Success(OceanFloorWg.name)
         case OceanFloor => Success(OceanFloor.name)
         case MotionBlocking => Success(MotionBlocking.name)
         case MotionBlockingNoLeaves => Success(MotionBlockingNoLeaves.name)
-    })
+    }
 }

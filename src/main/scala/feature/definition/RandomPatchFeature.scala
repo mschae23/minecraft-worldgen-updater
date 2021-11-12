@@ -4,10 +4,11 @@ package feature.definition
 import de.martenschaefer.data.serialization.{ Codec, ValidationError }
 import decorator.Decorators
 import decorator.definition.{ BlockFilterDecorator, BlockFilterDecoratorConfig }
-import valueprovider.{ AllOfBlockPredicate, BlockPredicate, TrueBlockPredicate }
-import cats.data.Writer
 import feature.{ Feature, FeatureProcessResult, Features }
 import util.*
+import valueprovider.{ AllOfBlockPredicate, BlockPredicate, TrueBlockPredicate }
+import cats.data.Writer
+import de.martenschaefer.minecraft.worldgenupdater.feature.placement.PlacedFeature
 
 case object RandomPatchFeature extends Feature(Codec[RandomPatchFeatureConfig]) {
     override def process(config: RandomPatchFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {
@@ -24,8 +25,10 @@ case object RandomPatchFeature extends Feature(Codec[RandomPatchFeatureConfig]) 
                     } else TrueBlockPredicate)).process))), context)
         } else
             config.feature.feature.process(config.feature.config, context)
-                .mapWritten(_.map(_.withPrependedPath("feature").withPrependedPath("config"))).map(feature =>
-                this.configure(RandomPatchFeatureConfig(config.tries, config.spreadXz, config.spreadY,
-                    feature)))
+                .mapWritten(_.map(_.withPrependedPath("feature").withPrependedPath("config")))
+                .mapBoth((warnings, feature) => (if (feature.modifiers.isEmpty) warnings else ValidationError(path =>
+                    s"$path: Any decorators used in the nested feature in random_patch were REMOVED.", List.empty) :: warnings, feature)).map(feature =>
+                PlacedFeature(this.configure(RandomPatchFeatureConfig(config.tries, config.spreadXz, config.spreadY,
+                    feature.feature)), List.empty))
     }
 }

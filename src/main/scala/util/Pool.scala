@@ -21,7 +21,7 @@ trait Weighted {
 }
 
 object Weighted {
-    case class Present[T](val data: T, override val weight: Weight) extends Weighted derives Codec
+    case class Present[T](data: T, override val weight: Weight) extends Weighted derives Codec
 
     case class Absent(override val weight: Weight) extends Weighted derives Codec
 }

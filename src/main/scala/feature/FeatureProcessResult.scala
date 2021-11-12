@@ -1,8 +1,9 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package feature
 
-import cats.data.Writer
 import de.martenschaefer.data.serialization.ElementError
 import feature.ConfiguredFeature
+import feature.placement.PlacedFeature
+import cats.data.Writer
 
-type FeatureProcessResult = ProcessResult[ConfiguredFeature[_, _]]
+type FeatureProcessResult = ProcessResult[PlacedFeature]

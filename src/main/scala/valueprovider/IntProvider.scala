@@ -27,10 +27,10 @@ trait IntProvider {
 
 object IntProvider {
     private val directIntProviderCodec: Codec[IntProvider] = Codec[Int].flatXmap(value =>
-        Success(ConstantIntProvider(value)))(_ match {
+        Success(ConstantIntProvider(value))) {
         case ConstantIntProvider(value) => Success(value)
         case _ => Failure(List(ValidationError(path => s"$path: Not a constant int provider", List.empty)))
-    })
+    }
 
     given Codec[IntProvider] = Codec.alternatives(List(directIntProviderCodec,
         Registry[IntProviderType[_]].dispatch[IntProvider](_.providerType, _.codec)))
@@ -99,7 +99,7 @@ case class ClampedIntProvider(val source: IntProvider, val minInclusive: Int, va
     }
 }
 
-case class WeightedListIntProvider(val distribution: DataPool[IntProvider]) extends IntProvider derives Codec {
+case class WeightedListIntProvider(distribution: DataPool[IntProvider]) extends IntProvider derives Codec {
     override val providerType: IntProviderType[_] = IntProviderTypes.WEIGHTED_LIST
 
     override def process: IntProvider = this.distribution.entries match {

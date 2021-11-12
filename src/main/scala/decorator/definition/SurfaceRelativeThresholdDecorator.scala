@@ -2,8 +2,17 @@ package de.martenschaefer.minecraft.worldgenupdater
 package decorator.definition
 
 import de.martenschaefer.data.serialization.Codec
-import decorator.DecoratorConfig
+import decorator.{ Decorator, DecoratorConfig }
+import feature.{ ConfiguredFeature, FeatureProcessResult }
+import feature.placement.PlacedFeature
+import feature.placement.definition.SurfaceRelativeThresholdFilterPlacement
 import util.{ BlockState, HeightmapType }
+
+case object SurfaceRelativeThresholdDecorator extends Decorator(Codec[SurfaceRelativeThresholdDecoratorConfig]) {
+    override def process(config: SurfaceRelativeThresholdDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult =
+        PlacedFeature(feature.feature, SurfaceRelativeThresholdFilterPlacement(config.heightmap,
+            config.minInclusive, config.maxInclusive) :: feature.modifiers).process(using context)
+}
 
 case class SurfaceRelativeThresholdDecoratorConfig(heightmap: HeightmapType,
                                                    minInclusive: Int, maxInclusive: Int) extends DecoratorConfig

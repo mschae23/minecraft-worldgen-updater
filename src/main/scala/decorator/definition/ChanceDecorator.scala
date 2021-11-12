@@ -2,23 +2,26 @@ package de.martenschaefer.minecraft.worldgenupdater
 package decorator.definition
 
 import scala.annotation.tailrec
-import cats.catsInstancesForId
 import de.martenschaefer.data.serialization.{ Codec, ElementNode, ValidationError }
 import decorator.{ ConfiguredDecorator, Decorator, Decorators }
 import feature.definition.DecoratedFeatureConfig
+import feature.placement.PlacedFeature
+import feature.placement.definition.RarityFilterPlacement
 import feature.{ ConfiguredFeature, FeatureProcessResult, Features }
 import valueprovider.ConstantIntProvider
+import cats.catsInstancesForId
 import cats.data.Writer
 
 case object ChanceDecorator extends Decorator(Codec[ChanceDecoratorConfig]) {
-    override def process(config: ChanceDecoratorConfig, feature: ConfiguredFeature[_, _], context: FeatureUpdateContext): FeatureProcessResult =
+    override def process(config: ChanceDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult =
         config.chance match {
-            case 1 if !context.onlyUpdate => Writer(List.empty, feature)
-            case 0 => super.process(config, feature, context).mapBoth((warnings, feature) =>
-                (ValidationError(path => s"$path: Chance is zero; Minecraft will probably crash", List.empty) :: warnings, feature))
+            case 1 if !context.onlyUpdate => Writer.value(feature) // don't add this decorator if chance == 1
+            case 0 => PlacedFeature(feature.feature, RarityFilterPlacement(config.chance) :: feature.modifiers).process(using context)
+                .mapBoth((warnings, feature) => (ValidationError(path =>
+                    s"$path: Chance is zero; Minecraft will probably crash", List.empty) :: warnings, feature))
 
-            case _ => super.process(config, feature, context)
-                .map(mergeChanceDecorators(_, context))
+            case _ => PlacedFeature(feature.feature, RarityFilterPlacement(config.chance) :: feature.modifiers).process(using context)
+                // .map(mergeChanceDecorators(_, context)) // TODO
         }
 
     def mergeChanceDecorators(feature: ConfiguredFeature[_, _], context: FeatureUpdateContext): ConfiguredFeature[_, _] = {

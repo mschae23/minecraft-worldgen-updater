@@ -2,11 +2,11 @@ package de.martenschaefer.minecraft.worldgenupdater
 package feature.definition
 
 import scala.annotation.tailrec
-import cats.data.Writer
 import de.martenschaefer.data.serialization.{ Codec, ElementNode }
-import de.martenschaefer.minecraft.worldgenupdater.decorator.ConfiguredDecorator
+import decorator.ConfiguredDecorator
 import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, Features }
-import util._
+import util.*
+import cats.data.Writer
 
 case object ArrayDecoratedFeature extends Feature(Codec[ArrayDecoratedFeatureConfig]) {
     override def process(config: ArrayDecoratedFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {
@@ -18,16 +18,12 @@ case object ArrayDecoratedFeature extends Feature(Codec[ArrayDecoratedFeatureCon
                         .mapBoth((featureWarnings, feature) => head.decorator.process(head.config, feature, context)
                             .mapWritten(warnings2 => featureWarnings ::: warnings2
                                 .map(_.withPrependedPath(ElementNode.Index(index)).withPrependedPath("decorators")
-                                .withPrependedPath("config"))).run),
+                                    .withPrependedPath("config"))).run),
                         index - 1)
                 case Nil => writer.map(_ => writer.value)
             }
 
-        if (context.onlyUpdate)
-            config.feature.feature.process(config.feature.config, context).map(feature => ConfiguredFeature(
-                Features.ARRAY_DECORATED, ArrayDecoratedFeatureConfig(feature, config.decorators)))
-        else
-            loop(config.decorators.reverse, config.feature.feature.process(config.feature.config, context)
+        loop(config.decorators.reverse, config.feature.feature.process(config.feature.config, context)
             .mapWritten(_.map(_.withPrependedPath("feature").withPrependedPath("config"))), config.decorators.size - 1)
     }
 }

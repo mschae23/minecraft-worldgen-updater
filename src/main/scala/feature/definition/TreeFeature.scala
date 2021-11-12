@@ -7,6 +7,7 @@ import decorator.{ ConfiguredDecorator, Decorators }
 import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, Features }
 import valueprovider.{ SimpleBlockStateProvider, WouldSurviveBlockPredicate }
 import cats.data.Writer
+import de.martenschaefer.minecraft.worldgenupdater.feature.placement.PlacedFeature
 import de.martenschaefer.minecraft.worldgenupdater.util.BlockPos
 
 case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
@@ -61,7 +62,7 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                 BlockPos.ORIGIN, config.saplingProvider.get.process.asInstanceOf[SimpleBlockStateProvider].state)))), context)
         } else if (config.saplingProvider.isDefined) {
             Writer(getSaplingProviderErrorList,
-                ConfiguredFeature(Features.TREE, TreeFeatureConfig(
+                PlacedFeature(ConfiguredFeature(Features.TREE, TreeFeatureConfig(
                     config.trunkProvider,
                     config.trunkPlacer,
                     config.foliageProvider,
@@ -74,9 +75,9 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                     config.maxWaterDepth,
                     config.heightmap,
                     None
-                ).process))
+                ).process), List.empty))
         } else
-            Writer(List.empty, Features.TREE.configure(if (context.onlyUpdate) config else config.process))
+            Writer.value(PlacedFeature(Features.TREE.configure(if (context.onlyUpdate) config else config.process), List.empty))
     }
 
     def getSaplingProviderErrorList: List[ElementError] =
