@@ -46,6 +46,7 @@ object BlockPredicateTypes {
     val MATCHING_BLOCKS = register("matching_blocks", Codec[MatchingBlocksBlockPredicate])
     val MATCHING_FLUIDS = register("matching_fluids", Codec[MatchingFluidsBlockPredicate])
     val REPLACEABLE = register("replaceable", Codec[ReplaceableBlockPredicate])
+    val SOLID = register("solid", Codec[SolidBlockPredicate])
     val WOULD_SURVIVE = register("would_survive", Codec[WouldSurviveBlockPredicate])
     val ANY_OF = register("any_of", Codec[AnyOfBlockPredicate])
     val ALL_OF = register("all_of", Codec[AllOfBlockPredicate])
@@ -103,6 +104,18 @@ object ReplaceableBlockPredicate {
         val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[ReplaceableBlockPredicate](_.offset)
 
         Codec.build(ReplaceableBlockPredicate(offset.get))
+    }
+}
+
+case class SolidBlockPredicate(offset: BlockPos) extends BlockPredicate {
+    override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.SOLID
+}
+
+object SolidBlockPredicate {
+    given Codec[SolidBlockPredicate] = Codec.record {
+        val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[SolidBlockPredicate](_.offset)
+
+        Codec.build(SolidBlockPredicate(offset.get))
     }
 }
 

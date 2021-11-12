@@ -26,7 +26,7 @@ object Direction {
     private val error: String => String = path =>
         s"$path should be \"down\", \"up\", \"north\", \"south\", \"west\", or \"east\""
 
-    given Codec[Direction] = Codec[String].flatXmap(_ match {
+    given Codec[Direction] = Codec[String].flatXmap {
         case "down" => Success(Direction.Down)
         case "up" => Success(Direction.Up)
         case "north" => Success(Direction.North)
@@ -35,7 +35,7 @@ object Direction {
         case "east" => Success(Direction.East)
 
         case _ => Failure(List(ValidationError(path => path, List.empty)))
-    })(direction => Success(direction.name))
+    }(direction => Success(direction.name))
 }
 
 type VerticalDirection = Direction

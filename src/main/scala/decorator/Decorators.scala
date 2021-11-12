@@ -24,6 +24,7 @@ object Decorators {
     val SURFACE_RELATIVE_THRESHOLD = register("surface_relative_threshold", SurfaceRelativeThresholdDecorator)
     val WATER_DEPTH_THRESHOLD = register("water_depth_threshold", WaterDepthThresholdDecorator)
     val BLOCK_SURVIVES_FILTER = register("block_survives_filter", BlockSurvivesFilterDecorator)
+    val CAVE_SURFACE = register("cave_surface", CaveSurfaceDecorator)
     val BLOCK_FILTER = register("block_filter", BlockFilterDecorator)
     val ENVIRONMENT_SCAN = register("environment_scan", EnvironmentScanDecorator)
 
