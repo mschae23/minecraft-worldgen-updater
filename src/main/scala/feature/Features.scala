@@ -14,6 +14,7 @@ object Features {
     val NO_SURFACE_ORE = register("no_surface_ore", NoSurfaceOreFeature)
     val RANDOM_PATCH = register("random_patch", RandomPatchFeature)
     val GROWING_PLANT = register("growing_plant", GrowingPlantFeature)
+    val GLOW_LICHEN = register("glow_lichen", new Feature(Codec[GlowLichenFeatureConfig]))
     val BLOCK_COLUMN = register("block_column", new Feature(Codec[BlockColumnFeatureConfig]))
     val RANDOM_SELECTOR = register("random_selector", RandomSelectorFeature)
     val SIMPLE_RANDOM_SELECTOR = register("simple_random_selector", SimpleRandomSelectorFeature)

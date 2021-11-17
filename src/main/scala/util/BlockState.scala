@@ -7,7 +7,7 @@ import de.martenschaefer.data.serialization.{ Codec, Element, ElementNode, Recor
 import de.martenschaefer.data.util._
 import de.martenschaefer.data.util.DataResult._
 
-case class BlockState(val name: Identifier, val properties: Map[String, Element])
+case class BlockState(name: Identifier, properties: Map[String, Element])
 
 object BlockState {
     given Codec[BlockState] with {
