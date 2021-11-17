@@ -8,6 +8,8 @@ class Pool[T <: Weighted] private(val totalWeight: Int, val entries: List[T]) {
         this(entries.foldLeft(0)((weight, t) => weight + t.weight.value), entries)
 
     export this.entries.isEmpty
+
+    def process: Pool[T] = new Pool(this.totalWeight, this.entries.filter(_.weight.value != 0))
 }
 
 object Pool {

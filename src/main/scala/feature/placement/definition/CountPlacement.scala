@@ -1,7 +1,7 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package feature.placement.definition
 
-import de.martenschaefer.data.serialization.Codec
+import de.martenschaefer.data.serialization.{ Codec, ValidationError }
 import de.martenschaefer.data.util.*
 import decorator.DecoratorConfig
 import feature.FeatureProcessResult
@@ -13,6 +13,12 @@ case class CountPlacement(count: IntProvider) extends PlacementModifier derives 
     override def modifierType: PlacementModifierType[_] = PlacementModifierTypes.COUNT
 
     override def process(feature: PlacedFeature)(using context: FeatureUpdateContext): FeatureProcessResult =
-        if (context.onlyUpdate) super.process(feature)
-        else Writer.value(PlacedFeature(feature.feature, CountPlacement(this.count.process) :: feature.modifiers))
+        this.count.process match {
+            case ConstantIntProvider(value) if !context.onlyUpdate && value == 1 => Writer.value(feature) // don't add this modifier if count == 1
+            case ConstantIntProvider(value) if value == 0 => super.process(feature).mapBoth((warnings, feature) => (ValidationError(
+                    path => s"$path: Count is zero; the decorated feature will never generate", List.empty) :: warnings, feature))
+
+            case count => Writer.value(PlacedFeature(feature.feature, CountPlacement(if (context.onlyUpdate) this.count else count)
+                :: feature.modifiers))
+        }
 }

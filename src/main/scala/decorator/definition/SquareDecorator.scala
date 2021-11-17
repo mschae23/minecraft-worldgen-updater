@@ -16,5 +16,5 @@ case object SquareDecorator extends Decorator(Codec[DefaultDecoratorConfig]) {
 case object IcebergDecorator extends Decorator(Codec[DefaultDecoratorConfig]) {
     override def process(config: DefaultDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult =
         PlacedFeature(feature.feature, SquarePlacement :: feature.modifiers).process(using context)
-            .mapWritten(ValidationError(path => s"$path: Iceberg decorator was removed in 1.18-pre1 refactor; replaced with in_square", List.empty) :: _)
+            .mapWritten(ValidationError(path => s"$path: `iceberg` decorator was removed in 1.18-pre1 refactor; replaced with `in_square`", List.empty) :: _)
 }

@@ -5,8 +5,8 @@ import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
 import de.martenschaefer.data.serialization.{ Codec, ValidationError }
-import de.martenschaefer.data.util.DataResult.*
 import de.martenschaefer.data.util.*
+import de.martenschaefer.data.util.DataResult.*
 import util.{ DataPool, Weighted }
 
 trait IntProvider {
@@ -38,7 +38,7 @@ object IntProvider {
     IntProviderTypes // init
 }
 
-case class IntProviderType[P <: IntProvider](val codec: Codec[P])
+case class IntProviderType[P <: IntProvider](codec: Codec[P])
 
 object IntProviderType {
     given Registry[IntProviderType[_]] = new SimpleRegistry(Identifier("minecraft", "int_provider_type"))
@@ -59,11 +59,11 @@ object IntProviderTypes {
     }
 }
 
-case class ConstantIntProvider(val value: Int) extends IntProvider derives Codec {
+case class ConstantIntProvider(value: Int) extends IntProvider derives Codec {
     override val providerType: IntProviderType[_] = IntProviderTypes.CONSTANT
 }
 
-case class UniformIntProvider(val minInclusive: Int, val maxInclusive: Int) extends IntProvider derives Codec {
+case class UniformIntProvider(minInclusive: Int, maxInclusive: Int) extends IntProvider derives Codec {
     override val providerType: IntProviderType[_] = IntProviderTypes.UNIFORM
 
     override def process: IntProvider =
@@ -71,7 +71,7 @@ case class UniformIntProvider(val minInclusive: Int, val maxInclusive: Int) exte
         else this
 }
 
-case class BiasedToBottomIntProvider(val minInclusive: Int, val maxInclusive: Int) extends IntProvider derives Codec {
+case class BiasedToBottomIntProvider(minInclusive: Int, maxInclusive: Int) extends IntProvider derives Codec {
     override val providerType: IntProviderType[_] = IntProviderTypes.BIASED_TO_BOTTOM
 
     override def process: IntProvider =
@@ -79,7 +79,7 @@ case class BiasedToBottomIntProvider(val minInclusive: Int, val maxInclusive: In
         else this
 }
 
-case class ClampedIntProvider(val source: IntProvider, val minInclusive: Int, val maxInclusive: Int) extends IntProvider derives Codec {
+case class ClampedIntProvider(source: IntProvider, minInclusive: Int, maxInclusive: Int) extends IntProvider derives Codec {
     override val providerType: IntProviderType[_] = IntProviderTypes.CLAMPED
 
     override def process: IntProvider = source match {
@@ -106,7 +106,12 @@ case class WeightedListIntProvider(distribution: DataPool[IntProvider]) extends 
         case head :: Nil => head.data.process
         case Nil => this
 
-        case _ => WeightedListIntProvider(DataPool(this.distribution.entries.map(weighted =>
-            Weighted.Present(weighted.data.process, weighted.weight))))
+        case _ => val pool = DataPool(this.distribution.entries.map(weighted =>
+            Weighted.Present(weighted.data.process, weighted.weight))).process
+
+            pool.entries match {
+                case head :: Nil => head.data.process
+                case _ => WeightedListIntProvider(pool)
+            }
     }
 }
