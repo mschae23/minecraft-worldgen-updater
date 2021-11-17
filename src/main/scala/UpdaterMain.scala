@@ -64,8 +64,7 @@ object UpdaterMain {
 
         val featureProcessor: PlacedFeature => FeatureProcessResult = _.process(using context)
 
-        val getFeaturePostProcessWarnings: PlacedFeature => List[ElementError] = feature =>
-            feature.feature.feature.getPostProcessWarnings(feature.feature.config, context)
+        val getFeaturePostProcessWarnings: PlacedFeature => List[ElementError] = _.getPostProcessWarnings(using context)
 
         FeatureUpdater.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings, fileNameRegex)
     }
