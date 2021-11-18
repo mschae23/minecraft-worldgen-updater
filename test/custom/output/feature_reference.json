@@ -4,6 +4,9 @@
     {
       "count": 5,
       "type": "minecraft:count"
+    },
+    {
+      "type": "minecraft:biome"
     }
   ]
 }

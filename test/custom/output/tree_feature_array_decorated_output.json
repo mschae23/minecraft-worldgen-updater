@@ -66,6 +66,21 @@
   },
   "placement": [
     {
+      "count": 5,
+      "type": "minecraft:count"
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "heightmap": "OCEAN_FLOOR_WG",
+      "type": "minecraft:heightmap"
+    },
+    {
+      "max_water_depth": 3,
+      "type": "minecraft:surface_water_depth_filter"
+    },
+    {
       "predicate": {
         "offset": [
           0,
@@ -81,19 +96,7 @@
       "type": "minecraft:block_predicate_filter"
     },
     {
-      "max_water_depth": 3,
-      "type": "minecraft:surface_water_depth_filter"
-    },
-    {
-      "heightmap": "OCEAN_FLOOR_WG",
-      "type": "minecraft:heightmap"
-    },
-    {
-      "type": "minecraft:in_square"
-    },
-    {
-      "count": 5,
-      "type": "minecraft:count"
+      "type": "minecraft:biome"
     }
   ]
 }

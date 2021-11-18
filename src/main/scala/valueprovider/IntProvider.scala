@@ -26,13 +26,13 @@ trait IntProvider {
 }
 
 object IntProvider {
-    private val directIntProviderCodec: Codec[IntProvider] = Codec[Int].flatXmap(value =>
+    private val literalCodec: Codec[IntProvider] = Codec[Int].flatXmap(value =>
         Success(ConstantIntProvider(value))) {
         case ConstantIntProvider(value) => Success(value)
         case _ => Failure(List(ValidationError(path => s"$path: Not a constant int provider", List.empty)))
     }
 
-    given Codec[IntProvider] = Codec.alternatives(List(directIntProviderCodec,
+    given Codec[IntProvider] = Codec.alternatives(List(literalCodec,
         Registry[IntProviderType[_]].dispatch[IntProvider](_.providerType, _.codec)))
 
     IntProviderTypes // init

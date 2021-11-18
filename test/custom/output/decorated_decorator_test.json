@@ -5,6 +5,19 @@
   },
   "placement": [
     {
+      "count": 5,
+      "type": "minecraft:count"
+    },
+    {
+      "type": "minecraft:in_square"
+    },
+    {
+      "height": {
+        "absolute": 64
+      },
+      "type": "minecraft:height_range"
+    },
+    {
       "predicate": {
         "offset": [
           0,
@@ -16,17 +29,7 @@
       "type": "minecraft:block_predicate_filter"
     },
     {
-      "height": {
-        "absolute": 64
-      },
-      "type": "minecraft:height_range"
-    },
-    {
-      "type": "minecraft:in_square"
-    },
-    {
-      "count": 5,
-      "type": "minecraft:count"
+      "type": "minecraft:biome"
     }
   ]
 }
