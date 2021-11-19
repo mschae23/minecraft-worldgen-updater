@@ -29,9 +29,9 @@ case class PlacedFeature(feature: ConfiguredFeature[_, _], modifiers: List[Place
         @tailrec
         def loop(warnings: ModifierWarnings, modifiers: List[PlacementModifier]): ModifierWarnings = modifiers match {
             case head :: tail => head match {
-                case SquarePlacement =>
+                case SquarePlacement => // warn for multiple `in_square` modifiers
                     loop(warnings.withHorizontalModifier(head), tail)
-                case BiomePlacement =>
+                case BiomePlacement => // warn if `biome` modifier is not present
                     loop(warnings.withBiomeModifier, tail)
                 case _ => loop(warnings, tail)
             }
