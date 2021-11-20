@@ -44,7 +44,9 @@ object BlockPredicateType {
 
 object BlockPredicateTypes {
     val MATCHING_BLOCKS = register("matching_blocks", Codec[MatchingBlocksBlockPredicate])
+    val MATCHING_BLOCK_TAG = register("matching_block_tag", Codec[MatchingBlockTagBlockPredicate])
     val MATCHING_FLUIDS = register("matching_fluids", Codec[MatchingFluidsBlockPredicate])
+    val HAS_STURDY_FACE = register("has_sturdy_face", Codec[HasSturdyFaceBlockPredicate])
     val REPLACEABLE = register("replaceable", Codec[ReplaceableBlockPredicate])
     val SOLID = register("solid", Codec[SolidBlockPredicate])
     val WOULD_SURVIVE = register("would_survive", Codec[WouldSurviveBlockPredicate])
@@ -82,6 +84,19 @@ object MatchingBlocksBlockPredicate {
     }
 }
 
+case class MatchingBlockTagBlockPredicate(tag: Identifier, offset: BlockPos) extends BlockPredicate {
+    override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.MATCHING_BLOCK_TAG
+}
+
+object MatchingBlockTagBlockPredicate {
+    given Codec[MatchingBlockTagBlockPredicate] = Codec.record {
+        val tag = Codec[Identifier].fieldOf("tag").forGetter[MatchingBlockTagBlockPredicate](_.tag)
+        val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[MatchingBlockTagBlockPredicate](_.offset)
+
+        Codec.build(MatchingBlockTagBlockPredicate(tag.get, offset.get))
+    }
+}
+
 case class MatchingFluidsBlockPredicate(fluids: List[Identifier], offset: BlockPos) extends BlockPredicate {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.MATCHING_FLUIDS
 }
@@ -92,6 +107,19 @@ object MatchingFluidsBlockPredicate {
         val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[MatchingFluidsBlockPredicate](_.offset)
 
         Codec.build(MatchingFluidsBlockPredicate(blocks.get, offset.get))
+    }
+}
+
+case class HasSturdyFaceBlockPredicate(offset: BlockPos, direction: Direction) extends BlockPredicate {
+    override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.HAS_STURDY_FACE
+}
+
+object HasSturdyFaceBlockPredicate {
+    given Codec[HasSturdyFaceBlockPredicate] = Codec.record {
+        val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[HasSturdyFaceBlockPredicate](_.offset)
+        val direction = Codec[Direction].fieldOf("direction").forGetter[HasSturdyFaceBlockPredicate](_.direction)
+
+        Codec.build(HasSturdyFaceBlockPredicate(offset.get, direction.get))
     }
 }
 
