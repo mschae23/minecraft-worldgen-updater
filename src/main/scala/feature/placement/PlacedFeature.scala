@@ -44,12 +44,12 @@ case class PlacedFeature(feature: ConfiguredFeature[_, _], modifiers: List[Place
 }
 
 object PlacedFeature {
-    val placedFeatureCodec: Codec[PlacedFeature] = Codec.record[PlacedFeature] {
+    val placedFeatureCodec: Codec[PlacedFeature] = PlacedFeatureCodec(Codec.record[PlacedFeature] {
         val feature = Codec[ConfiguredFeature[_, _]].fieldOf("feature").forGetter[PlacedFeature](_.feature)
         val modifiers = Codec[List[PlacementModifier]].fieldOf("placement").forGetter[PlacedFeature](_.modifiers)
 
         Codec.build(PlacedFeature(feature.get, modifiers.get))
-    }
+    })
 
     private val configuredFeatureCodec: Codec[PlacedFeature] = Codec[ConfiguredFeature[_, _]].flatXmap(
         feature => Success(PlacedFeature(feature, List.empty)))(feature => Failure(List(ValidationError(_ =>

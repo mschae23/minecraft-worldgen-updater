@@ -1,0 +1,10 @@
+{
+  "feature": {
+    "config": {
+      "feature_false": "minecraft:no",
+      "feature_true": "minecraft:yes"
+    },
+    "type": "simple_boolean_selector"
+  },
+  "placement": []
+}

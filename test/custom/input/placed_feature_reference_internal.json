@@ -1,0 +1,15 @@
+{
+  "feature": {
+    "type": "simple_boolean_selector",
+    "config": {
+      "feature_true": {
+        "type": "worldgenupdater_internal:placed_feature_reference",
+        "config": {
+          "feature": "minecraft:yes"
+        }
+      },
+      "feature_false": "minecraft:no"
+    }
+  },
+  "placement": []
+}

@@ -188,11 +188,14 @@ object FeatureUpdater {
         }
 
         lifecycle match {
+            case Lifecycle.Internal =>
+                warnings = ValidationError(_ => "Implementation details of Worldgen Updater were used.") :: warnings
+                foundWarnings = true
             case Lifecycle.Experimental =>
-                warnings = ValidationError(_ => "Experimental features used.", List.empty) :: warnings
+                warnings = ValidationError(_ => "Experimental features used.") :: warnings
                 foundWarnings = true
             case Lifecycle.Deprecated(since) =>
-                warnings = ValidationError(_ => s"Used features that are deprecated since $since.", List.empty) :: warnings
+                warnings = ValidationError(_ => s"Used features that are deprecated since $since.") :: warnings
                 foundWarnings = true
             case _ =>
         }
