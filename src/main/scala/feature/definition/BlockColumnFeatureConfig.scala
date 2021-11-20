@@ -8,8 +8,8 @@ import feature.definition.BlockColumnFeatureConfig.Layer
 import util.{ BlockPos, Direction }
 import valueprovider.{ BlockPredicate, BlockStateProvider, IntProvider, MatchingBlocksBlockPredicate }
 
-case class BlockColumnFeatureConfig(val layers: List[Layer], val direction: Direction,
-                                    val allowedPlacement: BlockPredicate, val prioritizeTip: Boolean) extends FeatureConfig
+case class BlockColumnFeatureConfig(layers: List[Layer], direction: Direction,
+                                    allowedPlacement: BlockPredicate, prioritizeTip: Boolean) extends FeatureConfig
 
 object BlockColumnFeatureConfig {
     case class Layer(val height: IntProvider, val provider: BlockStateProvider) derives Codec {

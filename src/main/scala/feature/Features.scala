@@ -16,6 +16,8 @@ object Features {
     val GROWING_PLANT = register("growing_plant", GrowingPlantFeature)
     val GLOW_LICHEN = register("glow_lichen", new Feature(Codec[GlowLichenFeatureConfig]))
     val BLOCK_COLUMN = register("block_column", new Feature(Codec[BlockColumnFeatureConfig]))
+    val VEGETATION_PATCH = register("vegetation_patch", VegetationPatchFeature)
+    val WATERLOGGED_VEGETATION_PATCH = register("waterlogged_vegetation_patch", WaterloggedVegetationPatchFeature)
     val RANDOM_SELECTOR = register("random_selector", RandomSelectorFeature)
     val SIMPLE_RANDOM_SELECTOR = register("simple_random_selector", SimpleRandomSelectorFeature)
     val RANDOM_BOOLEAN_SELECTOR = register("random_boolean_selector", RandomBooleanSelectorFeature)

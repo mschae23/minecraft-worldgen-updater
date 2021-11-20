@@ -6,6 +6,6 @@ import feature.FeatureConfig
 import util.{ DataPool, Direction }
 import valueprovider.{ BlockStateProvider, IntProvider }
 
-case class GrowingPlantFeatureConfig(val heightDistribution: DataPool[IntProvider], val direction: Direction,
-                                     val bodyProvider: BlockStateProvider, val headProvider: BlockStateProvider,
-                                     val allowWater: Boolean) extends FeatureConfig derives Codec
+case class GrowingPlantFeatureConfig(heightDistribution: DataPool[IntProvider], direction: Direction,
+                                     bodyProvider: BlockStateProvider, headProvider: BlockStateProvider,
+                                     allowWater: Boolean) extends FeatureConfig derives Codec
