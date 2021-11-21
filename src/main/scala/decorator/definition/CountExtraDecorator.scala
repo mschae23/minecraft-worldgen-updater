@@ -18,10 +18,10 @@ case object CountExtraDecorator extends Decorator(Codec[CountExtraDecoratorConfi
     override def process(config: CountExtraDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult = {
         val weightResult = getWeight(config.extraChance)
 
-        weightResult.flatMap((weight, extraWeight) => PlacedFeature(feature.feature, CountPlacement(WeightedListIntProvider(DataPool(List(
+        weightResult.flatMap((weight, extraWeight) => CountPlacement(WeightedListIntProvider(DataPool(List(
             Weighted.Present(ConstantIntProvider(config.count), Weight(weight)),
-            Weighted.Present(ConstantIntProvider(config.count + config.extraCount), Weight(extraWeight)))))) :: feature.modifiers)
-            .process(using context))
+            Weighted.Present(ConstantIntProvider(config.count + config.extraCount), Weight(extraWeight))))))
+            .process(feature)(using context))
     }
 
     def getWeight(chance: Float): ProcessResult[(Int, Int)] = {

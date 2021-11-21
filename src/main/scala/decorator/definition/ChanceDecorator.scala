@@ -14,5 +14,5 @@ import cats.data.Writer
 
 case object ChanceDecorator extends Decorator(Codec[ChanceDecoratorConfig]) {
     override def process(config: ChanceDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult =
-        PlacedFeature(feature.feature, RarityFilterPlacement(config.chance) :: feature.modifiers).process(using context)
+        RarityFilterPlacement(config.chance).process(feature)(using context)
 }

@@ -11,6 +11,6 @@ import cats.data.Writer
 
 case object HeightmapDecorator extends Decorator(Codec[HeightmapDecoratorConfig]) {
     override def process(config: HeightmapDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult =
-        HeightRangePlacement.processHeightReplacingModifier(feature, PlacedFeature(
-            feature.feature, HeightmapPlacement(config.heightmap) :: feature.modifiers).process(using context))(using context)
+        HeightRangePlacement.processHeightReplacingModifier(feature, HeightmapPlacement(config.heightmap)
+            .process(feature)(using context))(using context)
 }

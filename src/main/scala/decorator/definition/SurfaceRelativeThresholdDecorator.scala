@@ -10,8 +10,7 @@ import util.{ BlockState, HeightmapType }
 
 case object SurfaceRelativeThresholdDecorator extends Decorator(Codec[SurfaceRelativeThresholdDecoratorConfig]) {
     override def process(config: SurfaceRelativeThresholdDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult =
-        PlacedFeature(feature.feature, SurfaceRelativeThresholdFilterPlacement(config.heightmap,
-            config.minInclusive, config.maxInclusive) :: feature.modifiers).process(using context)
+        SurfaceRelativeThresholdFilterPlacement(config.heightmap, config.minInclusive, config.maxInclusive).process(feature)(using context)
 }
 
 case class SurfaceRelativeThresholdDecoratorConfig(heightmap: HeightmapType,

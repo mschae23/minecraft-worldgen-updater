@@ -51,6 +51,7 @@ object PlacementModifierTypes {
     val HEIGHT_RANGE = register("height_range", Codec[HeightRangePlacement])
     val RANDOM_OFFSET = register("random_offset", Codec[RandomOffsetPlacement])
     val IN_SQUARE = register("in_square", Codec[SquarePlacement.type])
+    val CARVING_MASK = register("carving_mask", Codec[CarvingMaskPlacement])
 
     private def register[M <: PlacementModifier](name: String, codec: Codec[M]): PlacementModifierType[M] = {
         val modifierType = PlacementModifierType(codec)

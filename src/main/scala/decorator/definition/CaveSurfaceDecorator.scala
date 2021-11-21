@@ -17,9 +17,9 @@ case class CaveSurfaceDecoratorConfig(surface: VerticalSurfaceType, floorToCeili
 
 case object CaveSurfaceDecorator extends Decorator(Codec[CaveSurfaceDecoratorConfig]) {
     override def process(config: CaveSurfaceDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult =
-        PlacedFeature(feature.feature, EnvironmentScanPlacement(config.surface match {
+        EnvironmentScanPlacement(config.surface match {
             case VerticalSurfaceType.Floor => Direction.Down
             case VerticalSurfaceType.Ceiling => Direction.Up
         }, MatchingBlocksBlockPredicate(List(Identifier("minecraft", "air")), BlockPos.ORIGIN), SolidBlockPredicate(BlockPos.ORIGIN),
-            config.floorToCeilingSearchRange) :: feature.modifiers).process(using context)
+            config.floorToCeilingSearchRange).process(feature)(using context)
 }

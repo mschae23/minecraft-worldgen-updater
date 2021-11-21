@@ -22,8 +22,8 @@ case object EnvironmentScanDecorator extends Decorator(Codec[EnvironmentScanDeco
     }
 
     def updateBasic(config: EnvironmentScanDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult =
-        PlacedFeature(feature.feature, EnvironmentScanPlacement(config.directionOfSearch, config.targetCondition,
-            TrueBlockPredicate, config.maxSteps) :: feature.modifiers).process(using context)
+        EnvironmentScanPlacement(config.directionOfSearch, config.targetCondition,
+            TrueBlockPredicate, config.maxSteps).process(feature)(using context)
 
     def addMaxStepsWarning(config: EnvironmentScanDecoratorConfig, feature: PlacedFeature): FeatureProcessResult = {
         if (config.maxSteps < 1 || config.maxSteps > 32)

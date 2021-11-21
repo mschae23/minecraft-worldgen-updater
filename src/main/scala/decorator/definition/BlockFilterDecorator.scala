@@ -14,9 +14,9 @@ import cats.data.Writer
 case object BlockFilterDecorator extends Decorator(Codec[BlockFilterDecoratorConfig]) {
     override def process(config: BlockFilterDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult = {
         if (config.old1.isDefined)
-            PlacedFeature(feature.feature, BlockPredicateFilterPlacement(updateOld1(config.old1.orNull).process) :: feature.modifiers).process(using context)
+            BlockPredicateFilterPlacement(updateOld1(config.old1.orNull).process).process(feature)(using context)
         else
-            PlacedFeature(feature.feature, BlockPredicateFilterPlacement(config.predicate) :: feature.modifiers).process(using context)
+            BlockPredicateFilterPlacement(config.predicate).process(feature)(using context)
     }
 
     def updateOld1(old1: Old1): BlockPredicate = {

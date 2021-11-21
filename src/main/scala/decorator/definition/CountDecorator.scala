@@ -12,5 +12,5 @@ import cats.data.Writer
 
 case object CountDecorator extends Decorator(Codec[CountDecoratorConfig]) {
     override def process(config: CountDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult =
-        PlacedFeature(feature.feature, CountPlacement(config.count) :: feature.modifiers).process(using context)
+        CountPlacement(config.count).process(feature)(using context)
 }

@@ -9,5 +9,5 @@ import feature.placement.definition.SurfaceWaterDepthFilterPlacement
 
 case object WaterDepthThresholdDecorator extends Decorator(Codec[WaterDepthThresholdDecoratorConfig]) {
     override def process(config: WaterDepthThresholdDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult =
-        PlacedFeature(feature.feature, SurfaceWaterDepthFilterPlacement(config.maxWaterDepth) :: feature.modifiers).process(using context)
+        SurfaceWaterDepthFilterPlacement(config.maxWaterDepth).process(feature)(using context)
 }

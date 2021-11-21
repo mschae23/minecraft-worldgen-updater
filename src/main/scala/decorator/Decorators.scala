@@ -9,6 +9,7 @@ import decorator.definition.*
 object Decorators {
     val NOPE = register("nope", NopeDecorator)
     val DECORATED = register("decorated", DecoratedDecorator)
+    val CARVING_MASK = register("carving_mask", CarvingMaskDecorator)
     val SQUARE = register("square", SquareDecorator)
     val ICEBERG = register("iceberg", IcebergDecorator)
     val RANGE = register("range", RangeDecorator)
@@ -17,7 +18,9 @@ object Decorators {
     val HEIGHTMAP_WORLD_SURFACE = register("heightmap_world_surface", HeightmapWorldSurfaceDecorator)
     val COUNT = register("count", CountDecorator)
     val COUNT_EXTRA = register("count_extra", CountExtraDecorator)
+    val COUNT_NOISE = register("count_noise", CountNoiseDecorator)
     val COUNT_NOISE_BIASED = register("count_noise_biased", CountNoiseBiasedDecorator)
+    val COUNT_MULTILAYER = register("count_multilayer", CountMultilayerDecorator)
     val CHANCE = register("chance", ChanceDecorator)
     val SPREAD_32_ABOVE = register("spread_32_above", Spread32AboveDecorator)
     val HEIGHTMAP_SPREAD_DOUBLE = register("heightmap_spread_double", HeightmapSpreadDoubleDecorator)

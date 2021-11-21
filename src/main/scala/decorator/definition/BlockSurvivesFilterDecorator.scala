@@ -12,7 +12,6 @@ import valueprovider.WouldSurviveBlockPredicate
 
 case object BlockSurvivesFilterDecorator extends Decorator(Codec[BlockSurvivesFilterDecoratorConfig]) {
     override def process(config: BlockSurvivesFilterDecoratorConfig, feature: PlacedFeature, context: FeatureUpdateContext): FeatureProcessResult = {
-        PlacedFeature(feature.feature, BlockPredicateFilterPlacement(
-            WouldSurviveBlockPredicate(BlockPos.ORIGIN, config.state)) :: feature.modifiers).process(using context)
+        BlockPredicateFilterPlacement(WouldSurviveBlockPredicate(BlockPos.ORIGIN, config.state)).process(feature)(using context)
     }
 }
