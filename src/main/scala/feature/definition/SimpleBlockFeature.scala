@@ -2,9 +2,11 @@ package de.martenschaefer.minecraft.worldgenupdater
 package feature.definition
 
 import de.martenschaefer.data.serialization.{ Codec, ElementError, ValidationError }
-import de.martenschaefer.minecraft.worldgenupdater.decorator.definition.BlockFilterDecoratorConfig
+import decorator.definition.BlockFilterDecoratorConfig
 import decorator.{ ConfiguredDecorator, Decorators }
 import feature.definition.SimpleBlockFeatureConfig.Old1
+import feature.placement.PlacedFeature
+import feature.placement.definition.BlockPredicateFilterPlacement
 import feature.{ ConfiguredFeature, Feature, FeatureProcessResult, Features }
 import util.*
 import valueprovider.{ AllOfBlockPredicate, BlockPredicate, MatchingBlocksBlockPredicate, TrueBlockPredicate }
@@ -12,9 +14,8 @@ import valueprovider.{ AllOfBlockPredicate, BlockPredicate, MatchingBlocksBlockP
 case object SimpleBlockFeature extends Feature(Codec[SimpleBlockFeatureConfig]) {
     override def process(config: SimpleBlockFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {
         if (config.old1.isDefined)
-            Features.DECORATED.process(DecoratedFeatureConfig(
-                this.configure(SimpleBlockFeatureConfig(config.toPlace)),
-                Decorators.BLOCK_FILTER.configure(BlockFilterDecoratorConfig(updateOld1(config.old1.get)))), context)
+            PlacedFeature(this.configure(SimpleBlockFeatureConfig(config.toPlace)),
+                List(BlockPredicateFilterPlacement(updateOld1(config.old1.get)))).process(using context)
         else if (!context.onlyUpdate)
             super.process(SimpleBlockFeatureConfig(config.toPlace.process), context)
         else

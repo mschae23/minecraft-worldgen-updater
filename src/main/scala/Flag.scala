@@ -5,7 +5,7 @@ enum Flag {
     case AssumeYes
     case Colored
     case Recursive
-    case ReducedDebugInfo
+    case Verbose
 
     def get(using flags: Flags): Boolean = flags(this)
 }

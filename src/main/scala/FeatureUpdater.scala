@@ -18,7 +18,7 @@ object FeatureUpdater {
                           getPostProcessWarnings: T => List[ElementError],
                           fileNameRegex: String)(using flags: Flags): Unit = {
         if (originPath.equals(targetPath) && !Flag.AssumeYes.get) {
-            println(colored("Origin and target path are the same. The origin files will be overwritten.", Console.YELLOW))
+            println(colored("Input and output path are the same. The origin files will be overwritten.", Console.YELLOW))
             println("Continue (y / N)? ")
 
             Using(new Scanner(System.in)) { scanner =>
@@ -124,7 +124,7 @@ object FeatureUpdater {
 
     def processFile[T: Codec](originFile: Path, targetFile: Path,
                               processor: T => ProcessResult[T],
-                              getPostProcessWarnings: T => List[ElementError])(using flags: Flags): FileProcessResult = {
+                              getPostProcessWarnings: T => List[ElementError])(using Flags): FileProcessResult = {
         var lifecycle = Lifecycle.Stable
         var foundWarnings = false
         var warnings: List[ElementError] = List.empty
@@ -189,13 +189,13 @@ object FeatureUpdater {
 
         lifecycle match {
             case Lifecycle.Internal =>
-                warnings = ValidationError(_ => "Implementation details of Worldgen Updater were used.") :: warnings
+                warnings = ValidationError(_ => "Implementation details of Worldgen Updater are used.") :: warnings
                 foundWarnings = true
             case Lifecycle.Experimental =>
-                warnings = ValidationError(_ => "Experimental features used.") :: warnings
+                warnings = ValidationError(_ => "Experimental features are used.") :: warnings
                 foundWarnings = true
             case Lifecycle.Deprecated(since) =>
-                warnings = ValidationError(_ => s"Used features that are deprecated since $since.") :: warnings
+                warnings = ValidationError(_ => s"Features that are deprecated since v$since are used.") :: warnings
                 foundWarnings = true
             case _ =>
         }
@@ -234,7 +234,7 @@ object FeatureUpdater {
             case _ if warning.isInstanceOf[RecordParseError] => {
                 val parseError = warning.asInstanceOf[RecordParseError]
 
-                val reducedDebugInfo = Flag.ReducedDebugInfo.get && (parseError.element match {
+                val reducedDebugInfo = !Flag.Verbose.get && (parseError.element match {
                     case Element.ObjectElement(_) => true
                     case Element.ArrayElement(_) => true
                     case _ => false

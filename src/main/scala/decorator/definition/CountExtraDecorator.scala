@@ -37,7 +37,8 @@ case object CountExtraDecorator extends Decorator(Codec[CountExtraDecoratorConfi
             val weightAsIntPlusOne = weightAsInt + 1
 
             if (Math.abs(weight - weightAsIntPlusOne.asInstanceOf[Double]) > 1.0E-5)
-                Writer(List(ValidationError(_ => s"`extra_chance` cannot be represented as weight", List.empty)), (weightAsInt - 1, 1))
+                Writer(List(ValidationError(path => s"$path: `extra_chance` cannot be represented as weight")
+                    .withPrependedPath("extra_chance").withPrependedPath("config")), (weightAsInt - 1, 1))
             else
                 Writer.value((weightAsIntPlusOne - 1, 1))
         } else

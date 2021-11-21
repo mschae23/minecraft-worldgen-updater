@@ -15,6 +15,6 @@ object GrowingPlantFeature extends Feature(Codec[GrowingPlantFeatureConfig]) {
                 (if (context.onlyUpdate) weighted.data else weighted.data.process)
                     .map(_ - 1, _ - 1), weighted.weight)))), config.bodyProvider), Layer(ConstantIntProvider(1), config.headProvider)),
             config.direction, if (config.allowWater) BlockPredicate.MATCHING_AIR_OR_WATER
-            else BlockPredicate.MATCHING_AIR, true), context)
+            else BlockPredicate.MATCHING_AIR, prioritizeTip = true), context)
     }
 }

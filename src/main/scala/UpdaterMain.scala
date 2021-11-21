@@ -26,7 +26,7 @@ object UpdaterMain {
                 Flag.UpdateOnly -> ("update-only", Some('u')),
                 Flag.Colored -> ("colored", None),
                 Flag.Recursive -> ("recursive", Some('r')),
-                Flag.ReducedDebugInfo -> ("reduced-debug-info", None))) { flags =>
+                Flag.Verbose -> ("verbose", Some('v')))) { flags =>
                 defaultedArgumentFlag("matches", None, CommandArgument.string("file name regex"), ".+\\.json$") { fileNameRegex =>
                     literal("features") {
                         argument(CommandArgument.string("origin")) { origin =>
@@ -71,7 +71,7 @@ object UpdaterMain {
 
     def printHelp(): Unit = {
         println("Commands:")
-        println("update features <origin> <target>")
+        println("update features <input> <output>")
         println()
         println("Flags:")
         printFlag(Some('h'), "help", "Shows a list of commands and flags")
@@ -79,7 +79,7 @@ object UpdaterMain {
         printFlag(Some('y'), "assume-yes", "Skip question if input files would be overwritten")
         printFlag(None, "colored", "Use colored output")
         printFlag(Some('r'), "recursive", "Recursively process features in subfolders")
-        printFlag(None, "reduced-debug-info", "Removes some debug information for errors")
+        printFlag(Some('v'), "verbose", "Adds some debug information for parse errors")
     }
 
     private def printFlag(shortFlag: Option[Char], flag: String, description: String): Unit =
