@@ -1,7 +1,7 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package feature.definition
 
-import de.martenschaefer.data.serialization.{ Codec, ElementError, ElementNode, ValidationError }
+import de.martenschaefer.data.serialization.{ AlternativeError, Codec, ElementError, ElementNode, ValidationError }
 import de.martenschaefer.data.util.DataResult.*
 import de.martenschaefer.data.util.Identifier
 import feature.definition.RandomPatchFeatureConfig.Old2
@@ -84,5 +84,13 @@ object RandomPatchFeatureConfig {
         Codec.build(RandomPatchFeatureConfig(tries.get, spreadXz.get, spreadY.get, feature.get))
     }
 
-    given Codec[RandomPatchFeatureConfig] = Codec.alternatives(List(old2Codec, currentCodec, old1Codec))
+    given Codec[RandomPatchFeatureConfig] = Codec.alternativesWithCustomError(
+        ("Old 2", old2Codec),
+        ("current", currentCodec),
+        ("Old 1", old1Codec)) { subErrors =>
+        subErrors.find(_.label == "Old 1").flatMap { subError => subError.errors match {
+            case NonSquareRandomPatchError(_, _, _) :: Nil => Some(subError.errors) // Only return "xspread and zspread are different" error if that exists
+            case _ => None
+        }}.getOrElse(List(AlternativeError(subErrors)))
+    }
 }

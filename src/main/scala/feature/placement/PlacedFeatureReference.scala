@@ -1,7 +1,7 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package feature.placement
 
-import de.martenschaefer.data.serialization.{ Codec, ElementError, ValidationError }
+import de.martenschaefer.data.serialization.{ AlternativeError, Codec, ElementError, ElementNode, RecordParseError, ValidationError }
 import de.martenschaefer.data.util.DataResult.*
 import de.martenschaefer.data.util.Identifier
 import feature.{ ConfiguredFeature, Features }
@@ -42,7 +42,54 @@ object PlacedFeatureReference {
         case reference => Failure(List(ValidationError(path => s"$path: Not a placed feature reference: $reference")))
     }
 
-    given Codec[PlacedFeatureReference] = Codec.alternatives(List(placedFeatureCodec, configuredFeatureCodec, referenceCodec))
+    given Codec[PlacedFeatureReference] = Codec.alternativesWithCustomError(
+        ("for placed feature", placedFeatureCodec),
+        ("for configured feature", configuredFeatureCodec),
+        ("for placed feature reference", referenceCodec)) { subErrors =>
+        val placedFeature = subErrors.find(subError => subError.label == "for placed feature").flatMap { subError =>
+            subError.errors match {
+                case RecordParseError.MissingKey(_, path) :: RecordParseError.MissingKey(_, path2) :: Nil =>
+                    val lastPaths = List(path.last, path2.last)
+
+                    if (lastPaths.contains(ElementNode.Name("feature")) && lastPaths.contains(ElementNode.Name("placement")))
+                        None // Don't show this error if both the "feature" and "placement" fields are not present
+                    else
+                        Some(subError)
+
+                case _ => Some(subError)
+            }
+        }
+
+        val configuredFeature = subErrors.find(subError => subError.label == "for configured feature").flatMap { subError =>
+            subError.errors match {
+                case RecordParseError.MissingKey(_, path) :: RecordParseError.MissingKey(_, path2) :: Nil =>
+                    val lastPaths = List(path.last, path2.last)
+
+                    if (lastPaths.contains(ElementNode.Name("type")) && lastPaths.contains(ElementNode.Name("config")))
+                        None // Don't show this error if both the "type" and "config" fields are not present
+                    else
+                        Some(subError)
+
+                case _ => Some(subError)
+            }
+        }
+
+        val reference = subErrors.find(subError => subError.label == "for placed feature reference").flatMap { subError =>
+            subError.errors match {
+                case RecordParseError.NotAString(_, _) :: Nil => None // Don't show this error if the element is not a String anyway
+
+                case _ => Some(subError)
+            }
+        }
+
+        List(placedFeature, configuredFeature, reference).flatMap(_.toList) match {
+            case Nil => List(AlternativeError(subErrors))
+
+            case subError :: Nil => subError.errors
+
+            case errors => List(AlternativeError(errors))
+        }
+    }
 
     Features // Init
 
