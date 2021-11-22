@@ -6,7 +6,7 @@ import de.martenschaefer.data.command.argument.CommandArgument
 import de.martenschaefer.data.command.builder.CommandBuilder.*
 import de.martenschaefer.data.serialization.ElementError
 import de.martenschaefer.data.util.DataResult.*
-import feature.placement.PlacedFeature
+import feature.placement.{ PlacedFeature, PlacedFeatureReference }
 import feature.{ ConfiguredFeature, FeatureProcessResult }
 import util.*
 
@@ -62,9 +62,10 @@ object UpdaterMain {
 
         val context = FeatureUpdateContext(flags(Flag.UpdateOnly))
 
-        val featureProcessor: PlacedFeature => FeatureProcessResult = _.process(using context)
+        val featureProcessor: PlacedFeatureReference => ProcessResult[PlacedFeatureReference] = _.process(using context)
+            .map(PlacedFeatureReference.apply)
 
-        val getFeaturePostProcessWarnings: PlacedFeature => List[ElementError] = _.getPostProcessWarnings(using context)
+        val getFeaturePostProcessWarnings: PlacedFeatureReference => List[ElementError] = _.getPostProcessWarnings(using context)
 
         FeatureUpdater.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings, fileNameRegex)
     }

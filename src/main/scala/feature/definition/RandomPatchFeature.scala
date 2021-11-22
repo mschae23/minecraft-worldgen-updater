@@ -4,8 +4,8 @@ package feature.definition
 import de.martenschaefer.data.serialization.{ Codec, ValidationError }
 import decorator.Decorators
 import decorator.definition.{ BlockFilterDecorator, BlockFilterDecoratorConfig }
-import feature.placement.PlacedFeature
 import feature.placement.definition.BlockPredicateFilterPlacement
+import feature.placement.{ PlacedFeature, PlacedFeatureReference }
 import feature.{ Feature, FeatureProcessResult, Features }
 import util.*
 import valueprovider.{ AllOfBlockPredicate, BlockPredicate, TrueBlockPredicate }
@@ -25,7 +25,7 @@ case object RandomPatchFeature extends Feature(Codec[RandomPatchFeatureConfig]) 
                         BlockPredicate.MATCHING_AIR else BlockPredicate.MATCHING_AIR_OR_WATER
                 } else TrueBlockPredicate)).process).process(feature)(using context))
         } else
-            config.feature.process(using context).mapWritten(_.map(_
+            config.feature.process(using context).map(PlacedFeatureReference.apply).mapWritten(_.map(_
                 .withPrependedPath("feature").withPrependedPath("config"))).map(feature =>
                 PlacedFeature(this.configure(RandomPatchFeatureConfig(config.tries, config.spreadXz, config.spreadY,
                     feature)), List.empty))

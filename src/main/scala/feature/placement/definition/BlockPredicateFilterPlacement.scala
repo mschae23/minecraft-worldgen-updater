@@ -19,7 +19,7 @@ case class BlockPredicateFilterPlacement(predicate: BlockPredicate) extends Plac
             case TrueBlockPredicate => Writer.value(feature)
             case NotBlockPredicate(TrueBlockPredicate) => mergeBlockFilter(feature, NotBlockPredicate(TrueBlockPredicate))
                 .mapWritten(ValidationError(path => s"$path: Block filter uses not(true) predicate; "
-                    + "the decorated feature will never generate", List(ElementNode.Name("predicate"))) :: _)
+                    + "the decorated feature will never generate") :: _)
 
             case predicate => mergeBlockFilter(feature, predicate)
         }

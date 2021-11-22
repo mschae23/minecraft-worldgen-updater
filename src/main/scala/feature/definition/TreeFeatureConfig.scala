@@ -8,18 +8,18 @@ import feature.definition.tree.{ FeatureSize, FoliagePlacer, TreeDecorator, Trun
 import util.*
 import valueprovider.{ BlockStateProvider, SimpleBlockStateProvider }
 
-case class TreeFeatureConfig(val trunkProvider: BlockStateProvider,
-                             val trunkPlacer: TrunkPlacer,
-                             val foliageProvider: BlockStateProvider,
-                             val foliagePlacer: FoliagePlacer,
-                             val dirtProvider: BlockStateProvider,
-                             val minimumSize: FeatureSize,
-                             val decorators: List[TreeDecorator],
-                             val ignoreVines: Boolean,
-                             val forceDirt: Boolean,
-                             val maxWaterDepth: Int = 0,
-                             val heightmap: Option[HeightmapType] = None,
-                             val saplingProvider: Option[BlockStateProvider] = None) extends FeatureConfig {
+case class TreeFeatureConfig(trunkProvider: BlockStateProvider,
+                             trunkPlacer: TrunkPlacer,
+                             foliageProvider: BlockStateProvider,
+                             foliagePlacer: FoliagePlacer,
+                             dirtProvider: BlockStateProvider,
+                             minimumSize: FeatureSize,
+                             decorators: List[TreeDecorator],
+                             ignoreVines: Boolean,
+                             forceDirt: Boolean,
+                             maxWaterDepth: Int = 0,
+                             heightmap: Option[HeightmapType] = None,
+                             saplingProvider: Option[BlockStateProvider] = None) extends FeatureConfig {
     def process: TreeFeatureConfig = TreeFeatureConfig(
         this.trunkProvider.process,
         this.trunkPlacer.process,
@@ -50,7 +50,7 @@ object TreeFeatureConfig {
 
         Codec.build(TreeFeatureConfig(trunkProvider.get, trunkPlacer.get, foliageProvider.get, foliagePlacer.get, SimpleBlockStateProvider(
             BlockState(Identifier("minecraft", "dirt"), Map.empty)), minimumSize.get, decorators.get, ignoreVines.get,
-            false, maxWaterDepth.get, Some(heightmap.get), Some(SimpleBlockStateProvider(
+            forceDirt = false, maxWaterDepth.get, Some(heightmap.get), Some(SimpleBlockStateProvider(
                 BlockState(Identifier("minecraft", "oak_sapling"), Map.empty)))))
     }
 

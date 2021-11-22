@@ -3,7 +3,7 @@ package feature.definition
 
 import de.martenschaefer.data.serialization.Codec
 import feature.FeatureConfig
-import feature.placement.PlacedFeature
+import feature.placement.PlacedFeatureReference
 
-case class RandomBooleanSelectorFeatureConfig(val featureTrue: PlacedFeature,
-                                              val featureFalse: PlacedFeature) extends FeatureConfig derives Codec
+case class RandomBooleanSelectorFeatureConfig(featureTrue: PlacedFeatureReference,
+                                              featureFalse: PlacedFeatureReference) extends FeatureConfig derives Codec

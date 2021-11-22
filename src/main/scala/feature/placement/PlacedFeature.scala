@@ -44,21 +44,12 @@ case class PlacedFeature(feature: ConfiguredFeature[_, _], modifiers: List[Place
 }
 
 object PlacedFeature {
-    val placedFeatureCodec: Codec[PlacedFeature] = PlacedFeatureCodec(Codec.record[PlacedFeature] {
+    given Codec[PlacedFeature] = Codec.record[PlacedFeature] {
         val feature = Codec[ConfiguredFeature[_, _]].fieldOf("feature").forGetter[PlacedFeature](_.feature)
         val modifiers = Codec[List[PlacementModifier]].fieldOf("placement").forGetter[PlacedFeature](_.modifiers)
 
         Codec.build(PlacedFeature(feature.get, modifiers.get))
-    })
-
-    private val configuredFeatureCodec: Codec[PlacedFeature] = Codec[ConfiguredFeature[_, _]].flatXmap(
-        feature => Success(PlacedFeature(feature, List.empty)))(feature => Failure(List(ValidationError(_ =>
-        s"Placed feature failed to encode: $feature", List.empty))))
-
-    given Codec[PlacedFeature] = placedFeatureCodec
-        .flatOrElse(configuredFeatureCodec)
-
-    Features // Init
+    }
 
     private case class ModifierWarnings(horizontalModifiers: List[PlacementModifier], hasBiomeModifier: Boolean) {
         def withHorizontalModifier(modifier: PlacementModifier) =

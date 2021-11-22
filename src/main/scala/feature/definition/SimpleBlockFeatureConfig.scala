@@ -2,16 +2,16 @@ package de.martenschaefer.minecraft.worldgenupdater
 package feature.definition
 
 import de.martenschaefer.data.serialization.Codec
-import de.martenschaefer.minecraft.worldgenupdater.feature.definition.SimpleBlockFeatureConfig.Old1
 import feature.FeatureConfig
+import feature.definition.SimpleBlockFeatureConfig.Old1
 import util.BlockState
 import valueprovider.BlockStateProvider
 
-case class SimpleBlockFeatureConfig(val toPlace: BlockStateProvider,
-                                    val old1: Option[Old1] = None) extends FeatureConfig
+case class SimpleBlockFeatureConfig(toPlace: BlockStateProvider,
+                                    old1: Option[Old1] = None) extends FeatureConfig
 
 object SimpleBlockFeatureConfig {
-    case class Old1(val placeOn: List[BlockState], val placeIn: List[BlockState], val placeUnder: List[BlockState])
+    case class Old1(placeOn: List[BlockState], placeIn: List[BlockState], placeUnder: List[BlockState])
 
     val old1Codec: Codec[SimpleBlockFeatureConfig] = Codec.record {
         val toPlace = Codec[BlockStateProvider].fieldOf("to_place").forGetter[SimpleBlockFeatureConfig](_.toPlace)

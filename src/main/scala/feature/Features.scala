@@ -23,7 +23,6 @@ object Features {
     val RANDOM_BOOLEAN_SELECTOR = register("random_boolean_selector", RandomBooleanSelectorFeature)
     val DECORATED = register("decorated", DecoratedFeature)
     val ARRAY_DECORATED = registerCustom("array_decorated", ArrayDecoratedFeature)
-    val PLACED_FEATURE_REFERENCE = register(Identifier(UpdaterMain.NAMESPACE + "_internal", "placed_feature_reference"), PlacedFeatureReferenceFeature)
 
     private def register[FC <: FeatureConfig](name: Identifier, feature: Feature[FC]): Feature[FC] = {
         feature.register(name)
