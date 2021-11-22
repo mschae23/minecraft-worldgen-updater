@@ -16,7 +16,7 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
         val config = unprocessedConfig.process
 
         if (config.heightmap.isDefined) {
-            PlacedFeature(this.configure(TreeFeatureConfig(
+            HeightmapPlacement(config.heightmap.get).process(PlacedFeature(this.configure(TreeFeatureConfig(
                 config.trunkProvider,
                 config.trunkPlacer,
                 config.foliageProvider,
@@ -29,9 +29,9 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                 config.maxWaterDepth,
                 None,
                 config.saplingProvider
-            )), List(HeightmapPlacement(config.heightmap.get))).process(using context)
+            )), List.empty))(using context)
         } else if (config.maxWaterDepth != 0) {
-            PlacedFeature(this.configure(TreeFeatureConfig(
+            SurfaceWaterDepthFilterPlacement(config.maxWaterDepth).process(PlacedFeature(this.configure(TreeFeatureConfig(
                 config.trunkProvider,
                 config.trunkPlacer,
                 config.foliageProvider,
@@ -44,9 +44,10 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                 0,
                 config.heightmap,
                 config.saplingProvider
-            )), List(SurfaceWaterDepthFilterPlacement(config.maxWaterDepth))).process(using context)
+            )), List.empty))(using context)
         } else if (config.saplingProvider.isDefined && config.saplingProvider.get.isInstanceOf[SimpleBlockStateProvider]) {
-            PlacedFeature(this.configure(TreeFeatureConfig(
+            BlockPredicateFilterPlacement(WouldSurviveBlockPredicate(BlockPos.ORIGIN,
+                config.saplingProvider.get.process.asInstanceOf[SimpleBlockStateProvider].state)).process(PlacedFeature(this.configure(TreeFeatureConfig(
                 config.trunkProvider,
                 config.trunkPlacer,
                 config.foliageProvider,
@@ -59,8 +60,7 @@ case object TreeFeature extends Feature(Codec[TreeFeatureConfig]) {
                 config.maxWaterDepth,
                 config.heightmap,
                 None
-            )), List(BlockPredicateFilterPlacement(WouldSurviveBlockPredicate(BlockPos.ORIGIN,
-                config.saplingProvider.get.process.asInstanceOf[SimpleBlockStateProvider].state)))).process(using context)
+            )), List.empty))(using context)
         } else if (config.saplingProvider.isDefined) {
             Writer(getSaplingProviderErrorList,
                 PlacedFeature(this.configure(TreeFeatureConfig(
