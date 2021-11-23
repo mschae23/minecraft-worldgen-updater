@@ -1,7 +1,7 @@
 package de.martenschaefer.minecraft.worldgenupdater
 package feature.definition
 
-import de.martenschaefer.data.serialization.Codec
+import de.martenschaefer.data.serialization.{ AlternativeError, Codec }
 import de.martenschaefer.data.util.Identifier
 import feature.FeatureConfig
 import feature.definition.tree.{ FeatureSize, FoliagePlacer, TreeDecorator, TrunkPlacer }
@@ -86,5 +86,14 @@ object TreeFeatureConfig {
             dirtProvider.get, minimumSize.get, decorators.get, ignoreVines.get, forceDirt.get))
     }
 
-    given Codec[TreeFeatureConfig] = Codec.alternatives(List(old2Codec, currentCodec, old1Codec))
+    given Codec[TreeFeatureConfig] = Codec.alternativesWithCustomError(
+        ("Old 2", old2Codec),
+        ("current", currentCodec),
+        ("Old 1", old1Codec)) { subErrors =>
+        List(AlternativeError(subErrors.sortBy(_.label match {
+            case "Old 2" => 2
+            case "Old 1" => 1
+            case "current" => 0
+        })))
+    }
 }

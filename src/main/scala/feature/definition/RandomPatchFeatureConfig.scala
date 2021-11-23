@@ -91,6 +91,10 @@ object RandomPatchFeatureConfig {
         subErrors.find(_.label == "Old 1").flatMap { subError => subError.errors match {
             case NonSquareRandomPatchError(_, _, _) :: Nil => Some(subError.errors) // Only return "xspread and zspread are different" error if that exists
             case _ => None
-        }}.getOrElse(List(AlternativeError(subErrors)))
+        }}.getOrElse(List(AlternativeError(subErrors.sortBy(_.label match {
+            case "Old 2" => 2
+            case "Old 1" => 1
+            case "current" => 0
+        }))))
     }
 }

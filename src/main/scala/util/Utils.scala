@@ -6,15 +6,16 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{ Files, Path, StandardOpenOption }
 import java.util.Scanner
 import scala.util.Using
+import de.martenschaefer.data.serialization.{ ElementError, ElementNode, RecordParseError }
 
-extension [T](self: T) {
+extension[T] (self: T) {
     def printlnDebug: T = {
         println("[debug] " + self)
         self
     }
 }
 
-extension [T](self: List[T]) {
+extension[T] (self: List[T]) {
     def uniquePairs: List[(T, T)] = for {
         (x, idxX) <- self.zipWithIndex
         (y, idxY) <- self.zipWithIndex
@@ -28,6 +29,24 @@ def colored(text: String, color: String)(using flags: Map[Flag, Boolean]): Strin
     else
         color + text + Console.RESET
 }
+
+// for Codec.alternativesWithCustomError
+
+def isMissingKeyError(error: ElementError, key: ElementNode): Boolean = error match {
+    case RecordParseError.MissingKey(_, path) => path.lastOption.contains(key)
+    case _ => false
+}
+
+def hasMissingKeyErrors(errors: List[ElementError], keys: List[ElementNode]): Boolean = {
+    val lastPathNodes = errors.flatMap {
+        case RecordParseError.MissingKey(_, path) => path.lastOption.toList
+        case _ => List.empty
+    }
+
+    keys.forall(lastPathNodes.contains)
+}
+
+// IO
 
 @throws[IOException]
 def read(file: Path): String = {

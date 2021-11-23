@@ -30,6 +30,7 @@ object Decorators {
     val CAVE_SURFACE = register("cave_surface", CaveSurfaceDecorator)
     val BLOCK_FILTER = register("block_filter", BlockFilterDecorator)
     val ENVIRONMENT_SCAN = register("environment_scan", EnvironmentScanDecorator)
+    val SCATTER = register("scatter", ScatterDecorator)
 
     private def register[DC <: DecoratorConfig](name: String, decorator: Decorator[DC]): Decorator[DC] = {
         decorator.register(Identifier("minecraft", name))
