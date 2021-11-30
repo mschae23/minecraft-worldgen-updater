@@ -236,7 +236,7 @@ case object FalseBlockPredicate extends BlockPredicate {
 
     override def process: BlockPredicate = NotBlockPredicate(TrueBlockPredicate).process
 
-    override def equals(o: Any): Boolean = Objects.equals(this, o)
+    override def equals(o: Any): Boolean = (o.isInstanceOf[AnyRef] && FalseBlockPredicate.eq(o.asInstanceOf[AnyRef]))
         || NotBlockPredicate(TrueBlockPredicate) == o
 
     def unapply(predicate: BlockPredicate): Boolean = equals(predicate)

@@ -3,6 +3,6 @@ package util
 
 import de.martenschaefer.data.serialization.Codec
 
-case class Range[+T](min: T, max: T) derives Codec {
-    override def toString: String = "[" + this.min + ", " + this.max + "]"
+case class Range[+T](minInclusive: T, maxInclusive: T) derives Codec {
+    override def toString: String = "[" + this.minInclusive + ", " + this.maxInclusive + "]"
 }

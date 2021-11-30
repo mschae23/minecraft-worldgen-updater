@@ -20,7 +20,7 @@ object BlockStateProvider {
     BlockStateProviderTypes // init
 }
 
-case class BlockStateProviderType[P <: BlockStateProvider](val codec: Codec[P])
+case class BlockStateProviderType[P <: BlockStateProvider](codec: Codec[P])
 
 object BlockStateProviderType {
     given Registry[BlockStateProviderType[_]] = new SimpleRegistry(Identifier("minecraft", "blockstate_provider_type"))
@@ -43,11 +43,11 @@ object BlockStateProviderTypes {
     }
 }
 
-case class SimpleBlockStateProvider(val state: BlockState) extends BlockStateProvider derives Codec {
+case class SimpleBlockStateProvider(state: BlockState) extends BlockStateProvider derives Codec {
     override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.SIMPLE_STATE_PROVIDER
 }
 
-case class WeightedBlockStateProvider(val entries: DataPool[BlockState]) extends BlockStateProvider derives Codec {
+case class WeightedBlockStateProvider(entries: DataPool[BlockState]) extends BlockStateProvider derives Codec {
     override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.WEIGHTED_STATE_PROVIDER
 }
 
@@ -67,7 +67,7 @@ case class NoiseBlockStateProvider(seed: Long, noise: NoiseParameters, scale: Fl
     override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.NOISE_PROVIDER
 
     override val process: BlockStateProvider = if (this.states.length == 1)
-        SimpleBlockStateProvider(this.states(0)) else this
+        SimpleBlockStateProvider(this.states.head) else this
 }
 
 case class DualNoiseBlockStateProvider(variety: Range[Int], slowNoise: NoiseParameters, slowScale: Float,
@@ -76,14 +76,14 @@ case class DualNoiseBlockStateProvider(variety: Range[Int], slowNoise: NoisePara
     override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.DUAL_NOISE_PROVIDER
 
     override val process: BlockStateProvider = if (this.states.length == 1)
-        SimpleBlockStateProvider(this.states(0)) else this
+        SimpleBlockStateProvider(this.states.head) else this
 }
 
-case class RotatedBlockProvider(val state: BlockState) extends BlockStateProvider derives Codec {
+case class RotatedBlockProvider(state: BlockState) extends BlockStateProvider derives Codec {
     override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.ROTATED_BLOCK_PROVIDER
 }
 
-case class RandomizedIntStateProvider(val source: BlockStateProvider, val property: String, val values: IntProvider)
+case class RandomizedIntStateProvider(source: BlockStateProvider, property: String, values: IntProvider)
     extends BlockStateProvider derives Codec {
     override val providerType: BlockStateProviderType[_] = BlockStateProviderTypes.RANDOMIZED_INT_STATE_PROVIDER
 }
