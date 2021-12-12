@@ -4,11 +4,13 @@ import java.nio.file.Paths
 import de.martenschaefer.data.command.Command
 import de.martenschaefer.data.command.argument.CommandArgument
 import de.martenschaefer.data.command.builder.CommandBuilder.*
-import de.martenschaefer.data.serialization.ElementError
+import de.martenschaefer.data.serialization.{ ElementError, ValidationError }
 import de.martenschaefer.data.util.DataResult.*
 import feature.placement.{ PlacedFeature, PlacedFeatureReference }
 import feature.{ ConfiguredFeature, FeatureProcessResult }
 import util.*
+import cats.catsInstancesForId
+import cats.data.Writer
 
 object UpdaterMain {
     val NAMESPACE = "worldgenupdater"
@@ -29,10 +31,28 @@ object UpdaterMain {
                 Flag.Verbose -> ("verbose", Some('v')))) { flags =>
                 defaultedArgumentFlag("matches", None, CommandArgument.string("file name regex"), ".+\\.json$") { fileNameRegex =>
                     literal("features") {
-                        argument(CommandArgument.string("origin")) { origin =>
-                            argument(CommandArgument.string("target")) { target =>
-                                result {
-                                    this.processFeatures(origin, target, fileNameRegex)(using flags)
+                        literalFlag("legacy", None) { // Legacy; from configured features to placed features
+                            argument(CommandArgument.string("input")) { input =>
+                                argument(CommandArgument.string("output")) { output =>
+                                    result {
+                                        this.processPlacedFeatures(input, output, fileNameRegex)(using flags)
+                                    }
+                                }
+                            }
+                        }
+
+                        // New; update configured and placed features separately
+                        argument(CommandArgument.string("configured feature input")) { configuredInput =>
+                            argument(CommandArgument.string("placed feature input")) { placedInput =>
+                                argument(CommandArgument.string("configured feature output")) { configuredOutput =>
+                                    argument(CommandArgument.string("placed feature output")) { placedOutput =>
+                                        result {
+                                            // TODO find a better solution for this
+                                            this.processConfiguredFeatures(configuredInput, configuredOutput, fileNameRegex)(using flags)
+                                            println()
+                                            this.processPlacedFeatures(placedInput, placedOutput, fileNameRegex)(using flags)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -56,7 +76,28 @@ object UpdaterMain {
         }
     }
 
-    def processFeatures(origin: String, target: String, fileNameRegex: String)(using flags: Flags): Unit = {
+    def processConfiguredFeatures(origin: String, target: String, fileNameRegex: String)(using flags: Flags): Unit = {
+        val originPath = Paths.get(origin)
+        val targetPath = Paths.get(target)
+
+        val context = FeatureUpdateContext(flags(Flag.UpdateOnly))
+
+        val featureProcessor: ConfiguredFeature[_, _] => ProcessResult[ConfiguredFeature[_, _]] = feature => {
+            val placedResult = feature.feature.process(feature.config, context)
+
+            if (placedResult.value.modifiers.isEmpty) placedResult.map(_.feature)
+            else
+                Writer(ValidationError(_ => s"Configured feature has modifiers after processing. These have been REMOVED.")
+                    :: placedResult.written, placedResult.value.feature)
+        }
+
+        val getFeaturePostProcessWarnings: ConfiguredFeature[_, _] => List[ElementError] =
+            feature => feature.feature.getPostProcessWarnings(feature.config, context)
+
+        FeatureUpdater.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings, fileNameRegex)
+    }
+
+    def processPlacedFeatures(origin: String, target: String, fileNameRegex: String)(using flags: Flags): Unit = {
         val originPath = Paths.get(origin)
         val targetPath = Paths.get(target)
 
