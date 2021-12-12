@@ -43,27 +43,30 @@ object PlacedFeatureReference {
         case reference => Failure(List(ValidationError(path => s"$path: Not a placed feature reference: $reference")))
     }
 
-    given Codec[PlacedFeatureReference] = Codec.alternativesWithCustomError(
+    given Codec[PlacedFeatureReference] = Codec.alternatives(
         ("for placed feature", placedFeatureCodec),
         ("for configured feature", configuredFeatureCodec),
-        ("for placed feature reference", referenceCodec)) { subErrors =>
-        List(subErrors.find(subError => subError.label == "for placed feature").flatMap { subError =>
-            if (hasMissingKeyErrors(subError.errors, List(ElementNode.Name("feature"), ElementNode.Name("placement"))))
-                None // Don't show placed feature errors if both the "feature" and "placement" fields are not present
-            else Some(subError)
-        }, subErrors.find(subError => subError.label == "for configured feature").flatMap { subError =>
-            if (hasMissingKeyErrors(subError.errors, List(ElementNode.Name("type"), ElementNode.Name("config"))))
-                None // Don't show configured feature errors if both the "type" and "config" fields are not present
-            else Some(subError)
-        }, subErrors.find(subError => subError.label == "for placed feature reference").flatMap { subError =>
-            subError.errors match {
-                case RecordParseError.NotAString(_, _) :: Nil => None // Don't show the placed feature reference error if the element is not a String anyway
-                case _ => Some(subError)
+        ("for placed feature reference", referenceCodec)).mapErrors { errors =>
+        errors.head match {
+            case AlternativeError(subErrors, _) => List(subErrors.find(subError => subError.label == "for placed feature").flatMap { subError =>
+                if (hasMissingKeyErrors(subError.errors, List(ElementNode.Name("feature"), ElementNode.Name("placement"))))
+                    None // Don't show placed feature errors if both the "feature" and "placement" fields are not present
+                else Some(subError)
+            }, subErrors.find(subError => subError.label == "for configured feature").flatMap { subError =>
+                if (hasMissingKeyErrors(subError.errors, List(ElementNode.Name("type"), ElementNode.Name("config"))))
+                    None // Don't show configured feature errors if both the "type" and "config" fields are not present
+                else Some(subError)
+            }, subErrors.find(subError => subError.label == "for placed feature reference").flatMap { subError =>
+                subError.errors match {
+                    case RecordParseError.NotAString(_, _) :: Nil => None // Don't show the placed feature reference error if the element is not a String anyway
+                    case _ => Some(subError)
+                }
+            }).flatMap(_.toList) match {
+                case Nil => List(AlternativeError(subErrors))
+                case subError :: Nil => subError.errors
+                case errors => List(AlternativeError(errors))
             }
-        }).flatMap(_.toList) match {
-            case Nil => List(AlternativeError(subErrors))
-            case subError :: Nil => subError.errors
-            case errors => List(AlternativeError(errors))
+            case _ => errors // Should never happen
         }
     }
 

@@ -10,7 +10,6 @@ import feature.{ Feature, FeatureProcessResult, Features }
 import util.*
 import valueprovider.{ AllOfBlockPredicate, BlockPredicate, TrueBlockPredicate }
 import cats.catsInstancesForId
-import cats.data.Writer
 
 case object RandomPatchFeature extends Feature(Codec[RandomPatchFeatureConfig]) {
     override def process(config: RandomPatchFeatureConfig, context: FeatureUpdateContext): FeatureProcessResult = {

@@ -4,7 +4,7 @@ package valueprovider
 import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
-import de.martenschaefer.data.serialization.{ Codec, ValidationError }
+import de.martenschaefer.data.serialization.{ AlternativeError, Codec, RecordParseError, ValidationError }
 import de.martenschaefer.data.util.*
 import de.martenschaefer.data.util.DataResult.*
 import util.{ DataPool, Weighted }
@@ -22,6 +22,8 @@ trait IntProvider {
             mapMin(min), mapMax(max))
         case WeightedListIntProvider(distribution) => WeightedListIntProvider(DataPool(distribution.entries.map(
             weighted => Weighted.Present(weighted.data.map(mapMin, mapMax), weighted.weight))))
+        case ClampedNormalIntProvider(mean, deviation, min, max) => ClampedNormalIntProvider(mean, deviation,
+            mapMin(min), mapMax(max))
     }
 }
 
@@ -32,8 +34,22 @@ object IntProvider {
         case _ => Failure(List(ValidationError(path => s"$path: Not a constant int provider", List.empty)))
     }
 
-    given Codec[IntProvider] = Codec.alternatives(List(literalCodec,
-        Registry[IntProviderType[_]].dispatch[IntProvider](_.providerType, _.codec)))
+    given Codec[IntProvider] = Codec.alternatives(
+        ("Literal", literalCodec),
+        ("Provider", Registry[IntProviderType[_]].dispatch[IntProvider](_.providerType, _.codec))
+    ).mapErrors { errors =>
+        errors.head match { //
+            case AlternativeError(subErrors, _) => subErrors.filter {
+                case AlternativeError.AlternativeSubError("Literal", List(literalError), _) =>
+                    !literalError.isInstanceOf[RecordParseError.NotAnInt] // Don't show "not an int" errors for int providers
+                case _ => true
+            } match {
+                case head :: Nil => head.errors
+                case errors => List(AlternativeError(errors))
+            }
+            case _ => errors // Should never happen
+        }
+    }
 
     IntProviderTypes // init
 }
@@ -50,6 +66,7 @@ object IntProviderTypes {
     val BIASED_TO_BOTTOM = register("biased_to_bottom", Codec[BiasedToBottomIntProvider])
     val CLAMPED = register("clamped", Codec[ClampedIntProvider])
     val WEIGHTED_LIST = register("weighted_list", Codec[WeightedListIntProvider])
+    val CLAMPED_NORMAL = register("clamped_normal", Codec[ClampedNormalIntProvider])
 
     private def register[P <: IntProvider](name: String, codec: Codec[P]): IntProviderType[P] = {
         val providerType = IntProviderType(codec)
@@ -92,6 +109,8 @@ case class ClampedIntProvider(source: IntProvider, minInclusive: Int, maxInclusi
             BiasedToBottomIntProvider(minInclusive, maxInclusive).process
         case ClampedIntProvider(source, minInclusive, maxInclusive)
             if minInclusive >= this.minInclusive && maxInclusive <= this.maxInclusive => source.process
+        case ClampedNormalIntProvider(mean, deviation, minInclusive, maxInclusive)
+            if minInclusive >= this.minInclusive && maxInclusive <= this.maxInclusive => source.process
 
         case _ if this.minInclusive == this.maxInclusive => this.source.process
 
@@ -114,4 +133,12 @@ case class WeightedListIntProvider(distribution: DataPool[IntProvider]) extends 
                 case _ => WeightedListIntProvider(pool)
             }
     }
+}
+
+case class ClampedNormalIntProvider(mean: Float, deviation: Float, minInclusive: Int, maxInclusive: Int) extends IntProvider derives Codec {
+    override val providerType: IntProviderType[_] = IntProviderTypes.CLAMPED_NORMAL
+
+    override def process: IntProvider =
+        if (this.minInclusive == this.maxInclusive) ConstantIntProvider(this.minInclusive)
+        else this
 }

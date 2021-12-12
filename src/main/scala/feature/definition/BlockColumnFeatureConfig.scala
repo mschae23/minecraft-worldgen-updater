@@ -2,7 +2,6 @@ package de.martenschaefer.minecraft.worldgenupdater
 package feature.definition
 
 import de.martenschaefer.data.serialization.Codec
-import de.martenschaefer.data.util.Identifier
 import feature.FeatureConfig
 import feature.definition.BlockColumnFeatureConfig.Layer
 import util.{ BlockPos, Direction }

@@ -20,9 +20,9 @@ object BlockPredicate {
 
     BlockPredicateTypes // init
 
-    val MATCHING_AIR = MatchingBlocksBlockPredicate(List(Identifier("minecraft", "air")), BlockPos.ORIGIN)
-    val MATCHING_AIR_OR_WATER = MatchingBlocksBlockPredicate(List(Identifier("minecraft", "air"),
-        Identifier("minecraft", "water")), BlockPos.ORIGIN)
+    val MATCHING_AIR = MatchingBlocksBlockPredicate(List(MinecraftIdentifier("minecraft", "air")), BlockPos.ORIGIN)
+    val MATCHING_AIR_OR_WATER = MatchingBlocksBlockPredicate(List(MinecraftIdentifier("minecraft", "air"),
+        MinecraftIdentifier("minecraft", "water")), BlockPos.ORIGIN)
 
     def hasTruePredicate(predicates: List[BlockPredicate]): Boolean =
         predicates.contains(TrueBlockPredicate) || predicates.uniquePairs.exists(isAlwaysTruePair)
@@ -71,39 +71,39 @@ object BlockPredicateTypes {
     }
 }
 
-case class MatchingBlocksBlockPredicate(blocks: List[Identifier], offset: BlockPos) extends BlockPredicate {
+case class MatchingBlocksBlockPredicate(blocks: List[MinecraftIdentifier], offset: BlockPos) extends BlockPredicate {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.MATCHING_BLOCKS
 }
 
 object MatchingBlocksBlockPredicate {
     given Codec[MatchingBlocksBlockPredicate] = Codec.record {
-        val blocks = Codec[List[Identifier]].fieldOf("blocks").forGetter[MatchingBlocksBlockPredicate](_.blocks)
+        val blocks = Codec[List[MinecraftIdentifier]].fieldOf("blocks").forGetter[MatchingBlocksBlockPredicate](_.blocks)
         val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[MatchingBlocksBlockPredicate](_.offset)
 
         Codec.build(MatchingBlocksBlockPredicate(blocks.get, offset.get))
     }
 }
 
-case class MatchingBlockTagBlockPredicate(tag: Identifier, offset: BlockPos) extends BlockPredicate {
+case class MatchingBlockTagBlockPredicate(tag: MinecraftIdentifier, offset: BlockPos) extends BlockPredicate {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.MATCHING_BLOCK_TAG
 }
 
 object MatchingBlockTagBlockPredicate {
     given Codec[MatchingBlockTagBlockPredicate] = Codec.record {
-        val tag = Codec[Identifier].fieldOf("tag").forGetter[MatchingBlockTagBlockPredicate](_.tag)
+        val tag = Codec[MinecraftIdentifier].fieldOf("tag").forGetter[MatchingBlockTagBlockPredicate](_.tag)
         val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[MatchingBlockTagBlockPredicate](_.offset)
 
         Codec.build(MatchingBlockTagBlockPredicate(tag.get, offset.get))
     }
 }
 
-case class MatchingFluidsBlockPredicate(fluids: List[Identifier], offset: BlockPos) extends BlockPredicate {
+case class MatchingFluidsBlockPredicate(fluids: List[MinecraftIdentifier], offset: BlockPos) extends BlockPredicate {
     override val predicateType: BlockPredicateType[_] = BlockPredicateTypes.MATCHING_FLUIDS
 }
 
 object MatchingFluidsBlockPredicate {
     given Codec[MatchingFluidsBlockPredicate] = Codec.record {
-        val blocks = Codec[List[Identifier]].fieldOf("fluids").forGetter[MatchingFluidsBlockPredicate](_.fluids)
+        val blocks = Codec[List[MinecraftIdentifier]].fieldOf("fluids").forGetter[MatchingFluidsBlockPredicate](_.fluids)
         val offset = Codec[BlockPos].orElse(BlockPos.ORIGIN).fieldOf("offset").forGetter[MatchingFluidsBlockPredicate](_.offset)
 
         Codec.build(MatchingFluidsBlockPredicate(blocks.get, offset.get))

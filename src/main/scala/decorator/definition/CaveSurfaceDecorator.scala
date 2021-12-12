@@ -8,7 +8,7 @@ import feature.definition.DecoratedFeatureConfig
 import feature.placement.PlacedFeature
 import feature.placement.definition.EnvironmentScanPlacement
 import feature.{ ConfiguredFeature, FeatureProcessResult, Features }
-import util.{ BlockPos, Direction, VerticalSurfaceType }
+import util.*
 import valueprovider.{ MatchingBlocksBlockPredicate, SolidBlockPredicate, TrueBlockPredicate }
 import cats.catsInstancesForId
 import cats.data.Writer
@@ -20,6 +20,6 @@ case object CaveSurfaceDecorator extends Decorator(Codec[CaveSurfaceDecoratorCon
         EnvironmentScanPlacement(config.surface match {
             case VerticalSurfaceType.Floor => Direction.Down
             case VerticalSurfaceType.Ceiling => Direction.Up
-        }, MatchingBlocksBlockPredicate(List(Identifier("minecraft", "air")), BlockPos.ORIGIN), SolidBlockPredicate(BlockPos.ORIGIN),
+        }, MatchingBlocksBlockPredicate(List(MinecraftIdentifier("minecraft", "air")), BlockPos.ORIGIN), SolidBlockPredicate(BlockPos.ORIGIN),
             config.floorToCeilingSearchRange).process(feature)(using context)
 }

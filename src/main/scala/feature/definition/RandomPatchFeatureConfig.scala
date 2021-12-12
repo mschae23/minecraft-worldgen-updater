@@ -3,7 +3,6 @@ package feature.definition
 
 import de.martenschaefer.data.serialization.{ AlternativeError, Codec, ElementError, ElementNode, ValidationError }
 import de.martenschaefer.data.util.DataResult.*
-import de.martenschaefer.data.util.Identifier
 import feature.definition.RandomPatchFeatureConfig.Old2
 import feature.placement.{ PlacedFeature, PlacedFeatureReference }
 import feature.{ ConfiguredFeature, FeatureConfig, Features }
@@ -57,14 +56,14 @@ object RandomPatchFeatureConfig {
                     old1.whitelist.map(_.name), old1.blacklist, if (old1.needsWater) Some(false) else None))))
     })(_ => Failure(List(ValidationError(path => s"random patch encoding failure at $path"))))
 
-    case class Old2(allowedOn: List[Identifier], disallowedOn: List[BlockState], onlyInAir: Option[Boolean])
+    case class Old2(allowedOn: List[MinecraftIdentifier], disallowedOn: List[BlockState], onlyInAir: Option[Boolean])
 
     val old2Codec: Codec[RandomPatchFeatureConfig] = Codec.record {
         val tries = Codec[Int].orElse(128).fieldOf("tries").forGetter[RandomPatchFeatureConfig](_.tries)
         val spreadXz = Codec[Int].orElse(7).fieldOf("xz_spread").forGetter[RandomPatchFeatureConfig](_.spreadXz)
         val spreadY = Codec[Int].orElse(3).fieldOf("y_spread").forGetter[RandomPatchFeatureConfig](_.spreadY)
 
-        val allowedOn = Codec[List[Identifier]].fieldOf("allowed_on").forGetter[RandomPatchFeatureConfig](_.old2.get.allowedOn)
+        val allowedOn = Codec[List[MinecraftIdentifier]].fieldOf("allowed_on").forGetter[RandomPatchFeatureConfig](_.old2.get.allowedOn)
         val disallowedOn = Codec[List[BlockState]].fieldOf("disallowed_on").forGetter[RandomPatchFeatureConfig](_.old2.get.disallowedOn)
         val onlyInAir = Codec[Boolean].fieldOf("only_in_air").forGetter[RandomPatchFeatureConfig](_.old2.get.onlyInAir.getOrElse(false))
 
@@ -84,17 +83,22 @@ object RandomPatchFeatureConfig {
         Codec.build(RandomPatchFeatureConfig(tries.get, spreadXz.get, spreadY.get, feature.get))
     }
 
-    given Codec[RandomPatchFeatureConfig] = Codec.alternativesWithCustomError(
+    given Codec[RandomPatchFeatureConfig] = Codec.alternatives(
         ("Old 2", old2Codec),
         ("current", currentCodec),
-        ("Old 1", old1Codec)) { subErrors =>
-        subErrors.find(_.label == "Old 1").flatMap { subError => subError.errors match {
-            case NonSquareRandomPatchError(_, _, _) :: Nil => Some(subError.errors) // Only return "xspread and zspread are different" error if that exists
-            case _ => None
-        }}.getOrElse(List(AlternativeError(subErrors.sortBy(_.label match {
-            case "Old 2" => 2
-            case "Old 1" => 1
-            case "current" => 0
-        }))))
+        ("Old 1", old1Codec)).mapErrors { errors =>
+        errors.head match {
+            case AlternativeError(subErrors, _) => subErrors.find(_.label == "Old 1").flatMap { subError =>
+                subError.errors match { // Only return "xspread and zspread are different" error if that exists
+                    case NonSquareRandomPatchError(_, _, _) :: Nil => Some(subError.errors)
+                    case _ => None
+                }
+            }.getOrElse(List(AlternativeError(subErrors.sortBy(_.label match {
+                case "Old 2" => 2
+                case "Old 1" => 1
+                case "current" => 0
+            }))))
+            case _ => errors // Should never happen
+        }
     }
 }

@@ -7,12 +7,12 @@ import de.martenschaefer.data.serialization.{ Codec, Element, ElementNode, Recor
 import de.martenschaefer.data.util._
 import de.martenschaefer.data.util.DataResult._
 
-case class BlockState(name: Identifier, properties: Map[String, Element])
+case class BlockState(name: MinecraftIdentifier, properties: Map[String, Element])
 
 object BlockState {
     given Codec[BlockState] with {
         def encodeElement(state: BlockState): Result[Element] = for {
-            encodedName <- Codec[Identifier].encodeElement(state.name)
+            encodedName <- Codec[MinecraftIdentifier].encodeElement(state.name)
             result <- Success(Element.ObjectElement(ListMap(
                 "Name" -> encodedName,
                 "Properties" -> Element.ObjectElement(state.properties)
@@ -21,7 +21,7 @@ object BlockState {
 
         def decodeElement(element: Element): Result[BlockState] = element match {
             case Element.ObjectElement(map) => for {
-                decodedName <- Identifier.createCodec("minecraft").decodeElement(map.getOrElse("Name",
+                decodedName <- Codec[MinecraftIdentifier].decodeElement(map.getOrElse("Name",
                     return Failure(List(RecordParseError.MissingKey(element, List(ElementNode.Name("Name")))))))
                 result <- Success(BlockState(decodedName, map.getOrElse("Properties", Element.ObjectElement(Map.empty)) match {
                     case Element.ObjectElement(properties) => properties

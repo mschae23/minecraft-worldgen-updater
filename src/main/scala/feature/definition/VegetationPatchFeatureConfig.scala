@@ -5,7 +5,7 @@ import de.martenschaefer.data.serialization.Codec
 import de.martenschaefer.data.util.Identifier
 import feature.FeatureConfig
 import feature.placement.PlacedFeatureReference
-import util.{ DataPool, Direction, VerticalSurfaceType }
+import util.*
 import valueprovider.{ BlockStateProvider, IntProvider }
 
 case class VegetationPatchFeatureConfig(replaceable: Identifier,

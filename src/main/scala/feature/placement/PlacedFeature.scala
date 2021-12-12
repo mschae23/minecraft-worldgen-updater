@@ -31,7 +31,7 @@ case class PlacedFeature(feature: ConfiguredFeature[_, _], modifiers: List[Place
             case head :: tail => head match {
                 case SquarePlacement => // warn for multiple `in_square` modifiers
                     loop(warnings.withHorizontalModifier(head), tail)
-                case BiomePlacement => // warn if `biome` modifier is not present
+                case BiomePlacement => // warn if `biome` modifier is not present (DISABLED)
                     loop(warnings.withBiomeModifier, tail)
                 case _ => loop(warnings, tail)
             }
@@ -63,9 +63,9 @@ object PlacedFeature {
                 ValidationError(_ =>
                     "Multiple horizontally spreading modifiers detected: " + this.horizontalModifiers
                         .mkString("", ", ", ""), List.empty) :: ModifierWarnings(List.empty, this.hasBiomeModifier).toList
-            else if (!this.hasBiomeModifier)
+            /* else if (!this.hasBiomeModifier) // DISABLED
                 ValidationError(_ =>
-                    "Placed feature is missing `biome` modifier", List.empty) :: ModifierWarnings(this.horizontalModifiers, hasBiomeModifier = true).toList
+                    "Placed feature is missing `biome` modifier", List.empty) :: ModifierWarnings(this.horizontalModifiers, hasBiomeModifier = true).toList */
             else List.empty
         }
     }

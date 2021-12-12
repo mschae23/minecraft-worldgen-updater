@@ -4,7 +4,7 @@ package valueprovider
 import de.martenschaefer.data.registry.Registry
 import de.martenschaefer.data.registry.Registry.register
 import de.martenschaefer.data.registry.impl.SimpleRegistry
-import de.martenschaefer.data.serialization.{ Codec, ValidationError }
+import de.martenschaefer.data.serialization.{ AlternativeError, Codec, RecordParseError, ValidationError }
 import de.martenschaefer.data.util.*
 import de.martenschaefer.data.util.DataResult.*
 import util.YOffset
@@ -28,8 +28,23 @@ object HeightProvider {
         case _ => Failure(List(ValidationError(path => s"$path: Not a constant height provider with an absolute Y value", List.empty)))
     }
 
-    given Codec[HeightProvider] = Codec.alternatives(List(offsetHeightProviderCodec, intHeightProviderCodec,
-        Registry[HeightProviderType[_]].dispatch[HeightProvider](_.providerType, _.codec)))
+    given Codec[HeightProvider] = Codec.alternatives(
+        ("Literal relative height", offsetHeightProviderCodec),
+        ("Literal absolute height", intHeightProviderCodec),
+        ("Provider", Registry[HeightProviderType[_]].dispatch[HeightProvider](_.providerType, _.codec))
+    ).mapErrors { errors =>
+        errors.head match { //
+            case AlternativeError(subErrors, _) => subErrors.filter {
+                case AlternativeError.AlternativeSubError("Literal absolute height", List(literalError), _) =>
+                    !literalError.isInstanceOf[RecordParseError.NotAnInt] // Don't show "not an int" errors for height providers
+                case _ => true
+            } match {
+                case head :: Nil => head.errors
+                case errors => List(AlternativeError(errors))
+            }
+            case _ => errors // Should never happen
+        }
+    }
 }
 
 case class HeightProviderType[P <: HeightProvider](codec: Codec[P])

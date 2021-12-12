@@ -49,9 +49,9 @@ object TreeFeatureConfig {
         val heightmap = Codec[HeightmapType].fieldOf("heightmap").forGetter[TreeFeatureConfig](_.heightmap.get)
 
         Codec.build(TreeFeatureConfig(trunkProvider.get, trunkPlacer.get, foliageProvider.get, foliagePlacer.get, SimpleBlockStateProvider(
-            BlockState(Identifier("minecraft", "dirt"), Map.empty)), minimumSize.get, decorators.get, ignoreVines.get,
+            BlockState(MinecraftIdentifier("minecraft", "dirt"), Map.empty)), minimumSize.get, decorators.get, ignoreVines.get,
             forceDirt = false, maxWaterDepth.get, Some(heightmap.get), Some(SimpleBlockStateProvider(
-                BlockState(Identifier("minecraft", "oak_sapling"), Map.empty)))))
+                BlockState(MinecraftIdentifier("minecraft", "oak_sapling"), Map.empty)))))
     }
 
     val old2Codec = Codec.record {
@@ -86,14 +86,17 @@ object TreeFeatureConfig {
             dirtProvider.get, minimumSize.get, decorators.get, ignoreVines.get, forceDirt.get))
     }
 
-    given Codec[TreeFeatureConfig] = Codec.alternativesWithCustomError(
+    given Codec[TreeFeatureConfig] = Codec.alternatives(
         ("Old 2", old2Codec),
         ("current", currentCodec),
-        ("Old 1", old1Codec)) { subErrors =>
-        List(AlternativeError(subErrors.sortBy(_.label match {
-            case "Old 2" => 2
-            case "Old 1" => 1
-            case "current" => 0
-        })))
+        ("Old 1", old1Codec)).mapErrors { errors =>
+        errors.head match {
+            case AlternativeError(subErrors, _) => List(AlternativeError(subErrors.sortBy(_.label match {
+                case "Old 2" => 2
+                case "Old 1" => 1
+                case "current" => 0
+            })))
+            case _ => errors // Should never happen
+        }
     }
 }

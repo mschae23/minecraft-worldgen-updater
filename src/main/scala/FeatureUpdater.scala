@@ -133,12 +133,12 @@ object FeatureUpdater {
             read(originFile)
         } catch {
             case e: IOException => {
-                warnings ::= ValidationError(_ => s"IO Exception thrown during read: ${e.getLocalizedMessage}", List.empty)
+                warnings ::= createErrorForException("read", Some("IO"), e)
                 return FileProcessResult.Errors(warnings)
             }
 
             case e: Exception => {
-                warnings ::= ValidationError(_ => s"Exception thrown during read: ${e.getLocalizedMessage}", List.empty)
+                warnings ::= createErrorForException("read", None, e)
                 return FileProcessResult.Errors(warnings)
             }
         }
@@ -151,7 +151,7 @@ object FeatureUpdater {
             }
         } catch {
             case e: Exception => {
-                warnings ::= ValidationError(_ => s"Exception thrown during decoding: ${e.getLocalizedMessage}", List.empty)
+                warnings ::= createErrorForException("decoding", None, e)
                 return FileProcessResult.Errors(warnings)
             }
         }
@@ -165,7 +165,7 @@ object FeatureUpdater {
             targetFeature
         } catch {
             case e: Exception => {
-                warnings ::= ValidationError(_ => s"Exception thrown during processing: ${e.getLocalizedMessage}", List.empty)
+                warnings ::= createErrorForException("processing", None, e)
                 return FileProcessResult.Errors(warnings)
             }
         }
@@ -182,7 +182,7 @@ object FeatureUpdater {
             }
         } catch {
             case e: Exception => {
-                warnings ::= ValidationError(_ => s"Exception thrown during encoding: ${e.getLocalizedMessage}", List.empty)
+                warnings ::= createErrorForException("encoding", None, e)
                 return FileProcessResult.Errors(warnings)
             }
         }
@@ -204,18 +204,21 @@ object FeatureUpdater {
             write(targetFile, targetFeatureString)
         } catch {
             case e: IOException => {
-                warnings ::= ValidationError(_ => s"IO Exception thrown during write: ${e.getLocalizedMessage}", List.empty)
+                warnings ::= createErrorForException("write", Some("IO"), e)
                 return FileProcessResult.Errors(warnings)
             }
 
             case e: Exception => {
-                warnings ::= ValidationError(_ => s"Exception thrown during write: ${e.getLocalizedMessage}", List.empty)
+                warnings ::= createErrorForException("write", None, e)
                 return FileProcessResult.Errors(warnings)
             }
         }
 
         if (foundWarnings) FileProcessResult.Warnings(warnings) else FileProcessResult.Normal
     }
+
+    private def createErrorForException(phase: String, kind: Option[String], e: Exception): ElementError =
+        ValidationError(_ => s"${ kind.map(_ + " ").getOrElse("") }Exception thrown during $phase: $e", List.empty)
 
     def printWarnings(warningType: WarningType, warnings: List[ElementError], indent: Int = 0)(using flags: Flags): Unit = {
         if (indent == 0)
