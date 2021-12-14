@@ -5,20 +5,21 @@ import java.nio.file.{ Files, LinkOption, Path, Paths }
 import java.util.Scanner
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.util.Using
-import de.martenschaefer.data.serialization.{ AlternativeError, Codec, Element, ElementError, ElementNode, JsonCodecs, RecordParseError, ValidationError }
+import de.martenschaefer.data.Result
+import de.martenschaefer.data.serialization.{ AlternativeError, Codec, Element, ElementError, ElementNode, Encoder, JsonCodecs, RecordParseError, ValidationError }
 import de.martenschaefer.data.serialization.JsonCodecs.given
 import de.martenschaefer.data.util.DataResult.*
-import de.martenschaefer.data.util.Lifecycle
+import de.martenschaefer.data.util.*
 import feature.ConfiguredFeature
 import util.*
 
 object FeatureUpdater {
-    def process[T: Codec](originPath: Path, targetPath: Path,
+    def process[T: Codec](inputPath: Path, outputPath: Path,
                           processor: T => ProcessResult[T],
                           getPostProcessWarnings: T => List[ElementError],
-                          fileNameRegex: String)(using flags: Flags): Unit = {
-        if (originPath.equals(targetPath) && !Flag.AssumeYes.get) {
-            println(colored("Input and output path are the same. The origin files will be overwritten.", Console.YELLOW))
+                          fileNameRegex: String, featureType: Option[String])(using flags: Flags): Option[WarningType] = {
+        if (inputPath.equals(outputPath) && !Flag.AssumeYes.get) {
+            println(colored("Input and output path are the same. The input files will be overwritten.", Console.YELLOW))
             println("Continue (y / N)? ")
 
             Using(new Scanner(System.in)) { scanner =>
@@ -30,26 +31,18 @@ object FeatureUpdater {
                     }
 
                     println(colored("Aborting.", Console.YELLOW))
-                    return
+                    return None
                 }
             }
         }
 
-        if (Files.isDirectory(originPath)) {
-            val warningType = this.processDirectory(originPath, targetPath, originPath,
-                processor, getPostProcessWarnings, fileNameRegex)
-
-            val notice = warningType match {
-                case WarningType.Error =>
-                    colored("Done with errors.", WarningType.Error.color)
-                case WarningType.Warning =>
-                    colored("Done with warnings.", WarningType.Warning.color)
-                case _ => colored("Done.", WarningType.Okay.color)
-            }
-
-            println(notice)
-        } else if (Files.isRegularFile(originPath))
-            this.processFeatureFile(originPath, targetPath, processor, getPostProcessWarnings)
+        if (Files.isDirectory(inputPath)) {
+            Some(this.processDirectory(inputPath, outputPath, inputPath,
+                processor, getPostProcessWarnings, fileNameRegex, featureType))
+        } else if (Files.isRegularFile(inputPath))
+            Some(this.processFeatureFile(inputPath, outputPath, processor, getPostProcessWarnings).warningType)
+        else
+            None
     }
 
     def processFeatureFile[T: Codec](originFile: Path, targetFile: Path,
@@ -68,27 +61,30 @@ object FeatureUpdater {
         result
     }
 
-    def processDirectory[T: Codec](originDirectory: Path, targetDirectory: Path,
+    def processDirectory[T: Codec](inputDirectory: Path, outputDirectory: Path,
                                    startingDirectory: Path,
                                    processor: T => ProcessResult[T],
                                    getPostProcessWarnings: T => List[ElementError],
-                                   fileNameRegex: String, recursive: Boolean = false)(using flags: Flags): WarningType = {
-        if (!Files.exists(originDirectory) || !Files.isDirectory(originDirectory))
-            throw new IllegalArgumentException(s"${originDirectory.getFileName} doesn't exist or is not a directory")
+                                   fileNameRegex: String, featureType: Option[String],
+                                   recursive: Boolean = false)(using flags: Flags): WarningType = {
+        if (!Files.exists(inputDirectory) || !Files.isDirectory(inputDirectory))
+            throw new IllegalArgumentException(s"${inputDirectory.getFileName} doesn't exist or is not a directory")
 
-        if (Files.exists(targetDirectory) && !Files.isDirectory(targetDirectory))
-            throw new IllegalArgumentException(s"${targetDirectory.getFileName} is not a directory")
+        if (Files.exists(outputDirectory) && !Files.isDirectory(outputDirectory))
+            throw new IllegalArgumentException(s"${outputDirectory.getFileName} is not a directory")
 
-        Files.createDirectories(targetDirectory)
+        Files.createDirectories(outputDirectory)
 
         var foundWarnings = false
         var foundErrors = false
 
-        Using(Files.newDirectoryStream(originDirectory)) { directoryStream =>
+        val featureTypeString = featureType.map(_ + " ").getOrElse("")
+
+        Using(Files.newDirectoryStream(inputDirectory)) { directoryStream =>
             for (path <- directoryStream.asScala) {
                 if (Flag.Recursive.get && Files.isDirectory(path)) {
-                    processDirectory(path, targetDirectory.resolve(path.getFileName), startingDirectory,
-                        processor, getPostProcessWarnings, fileNameRegex, recursive = true) match {
+                    processDirectory(path, outputDirectory.resolve(path.getFileName), startingDirectory,
+                        processor, getPostProcessWarnings, fileNameRegex, featureType, recursive = true) match {
                         case WarningType.Error => foundErrors = true
                         case WarningType.Warning => foundWarnings = true
                         case _ =>
@@ -98,9 +94,9 @@ object FeatureUpdater {
                 if (path.getFileName.toString.matches(fileNameRegex)) {
                     val relativePath = startingDirectory.relativize(path)
 
-                    println(s"[info] Processing $relativePath")
+                    println(s"[info] Processing $featureTypeString$relativePath")
 
-                    val result = processFile[T](path, targetDirectory.resolve(path.getFileName), processor, getPostProcessWarnings)
+                    val result = processFile[T](path, outputDirectory.resolve(path.getFileName), processor, getPostProcessWarnings)
 
                     result match {
                         case FileProcessResult.Errors(errors) => println()
@@ -122,39 +118,87 @@ object FeatureUpdater {
         else WarningType.Okay
     }
 
-    def processFile[T: Codec](originFile: Path, targetFile: Path,
+    def readFeature[T: Codec](inputPath: Path): Result[T] = {
+        val inputString: String = try {
+            read(inputPath)
+        } catch {
+            case e: IOException => {
+                return Failure(List(createErrorForException("read", Some("IO"), e)))
+            }
+
+            case e: Exception => {
+                return Failure(List(createErrorForException("read", None, e)))
+            }
+        }
+
+        try {
+            Codec[T].decode(inputString)
+        } catch {
+            case e: Exception => {
+                Failure(List(createErrorForException("decoding", None, e)))
+            }
+        }
+    }
+
+    def encodeFeature[T, E](feature: T)(using Codec[T], Encoder[Element, E]): Result[E] = {
+        try {
+            Codec[T].encode(feature)
+        } catch {
+            case e: Exception => {
+                Failure(List(createErrorForException("encoding", None, e)))
+            }
+        }
+    }
+
+    def writeFeature(targetPath: Path, feature: String): Option[List[ElementError]] = {
+        try {
+            write(targetPath, feature)
+            None
+        } catch {
+            case e: IOException => {
+                Some(List(createErrorForException("write", None, e)))
+            }
+
+            case e: Exception => {
+                Some(List(createErrorForException("write", None, e)))
+            }
+        }
+    }
+
+    def getWarningForLifecycle(lifecycle: Lifecycle): Option[ElementError] = lifecycle match {
+        case Lifecycle.Internal =>
+            Some(ValidationError(_ => "Implementation details of Worldgen Updater are used."))
+        case Lifecycle.Experimental =>
+            Some(ValidationError(_ => "Experimental features are used."))
+        case Lifecycle.Deprecated(since) =>
+            Some(ValidationError(_ => s"Features that are deprecated since v$since are used."))
+        case _ => None
+    }
+
+    def printDone(warningType: WarningType)(using Flags): Unit = {
+        println(warningType match {
+            case WarningType.Error =>
+                colored("Done with errors.", WarningType.Error.color)
+            case WarningType.Warning =>
+                colored("Done with warnings.", WarningType.Warning.color)
+            case _ => colored("Done.", WarningType.Okay.color)
+        })
+    }
+
+    def processFile[T: Codec](inputPath: Path, outputPath: Path,
                               processor: T => ProcessResult[T],
                               getPostProcessWarnings: T => List[ElementError])(using Flags): FileProcessResult = {
         var lifecycle = Lifecycle.Stable
         var foundWarnings = false
+
+        val originFeature: T = readFeature(inputPath) match {
+            case Success(feature, l) => lifecycle = l
+                feature
+
+            case Failure(errors, _) => return FileProcessResult.Errors(errors)
+        }
+
         var warnings: List[ElementError] = List.empty
-
-        val originString: String = try {
-            read(originFile)
-        } catch {
-            case e: IOException => {
-                warnings ::= createErrorForException("read", Some("IO"), e)
-                return FileProcessResult.Errors(warnings)
-            }
-
-            case e: Exception => {
-                warnings ::= createErrorForException("read", None, e)
-                return FileProcessResult.Errors(warnings)
-            }
-        }
-
-        val originFeature: T = try {
-            Codec[T].decode(originString) match {
-                case Success(feature, l) => lifecycle += l
-                    feature
-                case Failure(errors, _) => return FileProcessResult.Errors(errors.toList)
-            }
-        } catch {
-            case e: Exception => {
-                warnings ::= createErrorForException("decoding", None, e)
-                return FileProcessResult.Errors(warnings)
-            }
-        }
 
         val targetFeature: T = try {
             val targetFeatureWriter: ProcessResult[T] = processor(originFeature)
@@ -170,51 +214,19 @@ object FeatureUpdater {
             }
         }
 
-        if (warnings.nonEmpty) foundWarnings = true
-
-        val targetFeatureString: String = try {
-            Codec[T].encode(targetFeature)(using JsonCodecs.prettyJsonEncoder) match {
-                case Success(json, l) => lifecycle += l
-                    json
-                case Failure(errors, _) => {
-                    return FileProcessResult.Errors(errors.toList)
-                }
-            }
-        } catch {
-            case e: Exception => {
-                warnings ::= createErrorForException("encoding", None, e)
-                return FileProcessResult.Errors(warnings)
-            }
+        val targetFeatureString: String = encodeFeature(targetFeature)(using Codec[T], JsonCodecs.prettyJsonEncoder) match {
+            case Success(s, l) => lifecycle += l
+                s
+            case Failure(errors, _) => return FileProcessResult.Errors(errors)
         }
 
-        lifecycle match {
-            case Lifecycle.Internal =>
-                warnings = ValidationError(_ => "Implementation details of Worldgen Updater are used.") :: warnings
-                foundWarnings = true
-            case Lifecycle.Experimental =>
-                warnings = ValidationError(_ => "Experimental features are used.") :: warnings
-                foundWarnings = true
-            case Lifecycle.Deprecated(since) =>
-                warnings = ValidationError(_ => s"Features that are deprecated since v$since are used.") :: warnings
-                foundWarnings = true
-            case _ =>
-        }
+        // Add lifecycle warning
+        getWarningForLifecycle(lifecycle).foreach(error => warnings = error :: warnings)
 
-        try {
-            write(targetFile, targetFeatureString)
-        } catch {
-            case e: IOException => {
-                warnings ::= createErrorForException("write", Some("IO"), e)
-                return FileProcessResult.Errors(warnings)
-            }
+        // Write feature to file
+        writeFeature(outputPath, targetFeatureString).foreach(errors => warnings = warnings ::: errors)
 
-            case e: Exception => {
-                warnings ::= createErrorForException("write", None, e)
-                return FileProcessResult.Errors(warnings)
-            }
-        }
-
-        if (foundWarnings) FileProcessResult.Warnings(warnings) else FileProcessResult.Normal
+        if (warnings.isEmpty) FileProcessResult.Normal else FileProcessResult.Warnings(warnings)
     }
 
     private def createErrorForException(phase: String, kind: Option[String], e: Exception): ElementError =

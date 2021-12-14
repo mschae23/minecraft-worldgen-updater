@@ -2,10 +2,10 @@ package de.martenschaefer.minecraft.worldgenupdater
 
 import de.martenschaefer.data.serialization.ElementError
 
-enum FileProcessResult {
-    case Normal
-    case Warnings(val warnings: List[ElementError])
-    case Errors(val errors: List[ElementError])
+enum FileProcessResult(val warningType: WarningType) {
+    case Normal extends FileProcessResult(WarningType.Okay)
+    case Warnings(val warnings: List[ElementError]) extends FileProcessResult(WarningType.Warning)
+    case Errors(val errors: List[ElementError]) extends FileProcessResult(WarningType.Error)
 
     def +(other: FileProcessResult): FileProcessResult = other match {
         case Errors(errors) => this match {

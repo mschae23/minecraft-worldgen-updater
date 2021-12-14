@@ -28,14 +28,19 @@ object UpdaterMain {
                 Flag.UpdateOnly -> ("update-only", Some('u')),
                 Flag.Colored -> ("colored", None),
                 Flag.Recursive -> ("recursive", Some('r')),
-                Flag.Verbose -> ("verbose", Some('v')))) { flags =>
+                Flag.Verbose -> ("verbose", Some('v')))) { flagsMap =>
+                given flags: Flags = flagsMap
+
                 defaultedArgumentFlag("matches", None, CommandArgument.string("file name regex"), ".+\\.json$") { fileNameRegex =>
                     literal("features") {
-                        literalFlag("legacy", None) { // Legacy; from configured features to placed features
+                        // Legacy; update configured features to placed features
+                        literalFlag("legacy", None) {
                             argument(CommandArgument.string("input")) { input =>
                                 argument(CommandArgument.string("output")) { output =>
                                     result {
-                                        this.processPlacedFeatures(input, output, fileNameRegex)(using flags)
+                                        val warningType = this.processPlacedFeatures(input, output, fileNameRegex, legacy = true)
+
+                                        warningType.foreach(FeatureUpdater.printDone)
                                     }
                                 }
                             }
@@ -48,9 +53,20 @@ object UpdaterMain {
                                     argument(CommandArgument.string("placed feature output")) { placedOutput =>
                                         result {
                                             // TODO find a better solution for this
-                                            this.processConfiguredFeatures(configuredInput, configuredOutput, fileNameRegex)(using flags)
+                                            var warningType = this.processConfiguredFeatures(configuredInput, configuredOutput, fileNameRegex)
                                             println()
-                                            this.processPlacedFeatures(placedInput, placedOutput, fileNameRegex)(using flags)
+                                            this.processPlacedFeatures(placedInput, placedOutput, fileNameRegex, legacy = false).foreach {
+                                                case WarningType.Error => warningType = Some(WarningType.Error)
+
+                                                case WarningType.Warning =>
+                                                    if (warningType.contains(WarningType.Okay) || warningType.isEmpty)
+                                                        warningType = Some(WarningType.Warning)
+
+                                                case WarningType.Okay => if (warningType.isEmpty)
+                                                    warningType = Some(WarningType.Okay)
+                                            }
+
+                                            warningType.foreach(FeatureUpdater.printDone)
                                         }
                                     }
                                 }
@@ -76,9 +92,9 @@ object UpdaterMain {
         }
     }
 
-    def processConfiguredFeatures(origin: String, target: String, fileNameRegex: String)(using flags: Flags): Unit = {
-        val originPath = Paths.get(origin)
-        val targetPath = Paths.get(target)
+    def processConfiguredFeatures(origin: String, target: String, fileNameRegex: String)(using flags: Flags): Option[WarningType] = {
+        val inputPath = Paths.get(origin)
+        val outputPath = Paths.get(target)
 
         val context = FeatureUpdateContext(flags(Flag.UpdateOnly))
 
@@ -94,10 +110,10 @@ object UpdaterMain {
         val getFeaturePostProcessWarnings: ConfiguredFeature[_, _] => List[ElementError] =
             feature => feature.feature.getPostProcessWarnings(feature.config, context)
 
-        FeatureUpdater.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings, fileNameRegex)
+        FeatureUpdater.process(inputPath, outputPath, featureProcessor, getFeaturePostProcessWarnings, fileNameRegex, Some("configured feature"))
     }
 
-    def processPlacedFeatures(origin: String, target: String, fileNameRegex: String)(using flags: Flags): Unit = {
+    def processPlacedFeatures(origin: String, target: String, fileNameRegex: String, legacy: Boolean)(using flags: Flags): Option[WarningType] = {
         val originPath = Paths.get(origin)
         val targetPath = Paths.get(target)
 
@@ -108,7 +124,8 @@ object UpdaterMain {
 
         val getFeaturePostProcessWarnings: PlacedFeatureReference => List[ElementError] = _.getPostProcessWarnings(using context)
 
-        FeatureUpdater.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings, fileNameRegex)
+        FeatureUpdater.process(originPath, targetPath, featureProcessor, getFeaturePostProcessWarnings, fileNameRegex,
+            if (legacy) None else Some("placed feature"))
     }
 
     def printHelp(): Unit = {
@@ -122,6 +139,7 @@ object UpdaterMain {
         printFlag(None, "colored", "Use colored output")
         printFlag(Some('r'), "recursive", "Recursively process features in subfolders")
         printFlag(Some('v'), "verbose", "Adds some debug information for parse errors")
+        printFlag(None, "legacy", "Update only configured features to placed features")
     }
 
     private def printFlag(shortFlag: Option[Char], flag: String, description: String): Unit =
